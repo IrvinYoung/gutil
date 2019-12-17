@@ -1,4 +1,4 @@
-package AUZ
+package auz
 
 import (
 	"github.com/casbin/casbin/v2"
@@ -98,22 +98,22 @@ func testEnforce(t *testing.T, e *casbin.Enforcer) {
 		err error
 	)
 
-	ok, err = e.Enforce("alice","data1","write")
+	ok, err = e.Enforce("alice", "data1", "write")
 	t.Log(ok, "->", err)
-	ok, err = e.Enforce("alice","data2","write")
+	ok, err = e.Enforce("alice", "data2", "write")
 	t.Log(ok, "->", err)
-	ok, err = e.Enforce("bob","data2","write")
+	ok, err = e.Enforce("bob", "data2", "write")
 	t.Log(ok, "->", err)
 
-	ok, err = e.Enforce("root","data3","update")
+	ok, err = e.Enforce("root", "data3", "update")
 	t.Log(ok, "->", err)
-	ok, err = e.Enforce("admin","data3","update")
+	ok, err = e.Enforce("admin", "data3", "update")
 	t.Log(ok, "->", err)
-	ok, err = e.Enforce("bob","data3","update")
+	ok, err = e.Enforce("bob", "data3", "update")
 	t.Log(ok, "->", err)
-	ok, err = e.Enforce("alice","data3","update")
+	ok, err = e.Enforce("alice", "data3", "update")
 	t.Log(ok, "->", err)
-	ok, err = e.Enforce("bob","data3","read")
+	ok, err = e.Enforce("bob", "data3", "read")
 	t.Log(ok, "->", err)
 }
 

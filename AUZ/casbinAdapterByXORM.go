@@ -1,4 +1,4 @@
-package AUZ
+package auz
 
 import (
 	"errors"
