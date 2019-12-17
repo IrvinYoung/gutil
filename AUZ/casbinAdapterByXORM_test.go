@@ -5,9 +5,9 @@ import (
 	"github.com/casbin/casbin/v2/model"
 	_ "github.com/go-sql-driver/mysql"
 	"strings"
+	"testing"
 	"time"
 	"xorm.io/xorm"
-	"testing"
 )
 
 type Permission struct {
@@ -85,20 +85,48 @@ func TestAll(t *testing.T) {
 
 	testAddPolicy(t, e)
 	testSavePolicy(t, e)
-	//testRemovePolicy(t, e)
+
+	testEnforce(t, e)
+
+	testRemovePolicy(t, e)
 	testRemoveFilteredPolicy(t, e)
 }
 
+func testEnforce(t *testing.T, e *casbin.Enforcer) {
+	var (
+		ok  bool
+		err error
+	)
+
+	ok, err = e.Enforce("alice","data1","write")
+	t.Log(ok, "->", err)
+	ok, err = e.Enforce("alice","data2","write")
+	t.Log(ok, "->", err)
+	ok, err = e.Enforce("bob","data2","write")
+	t.Log(ok, "->", err)
+
+	ok, err = e.Enforce("root","data3","update")
+	t.Log(ok, "->", err)
+	ok, err = e.Enforce("admin","data3","update")
+	t.Log(ok, "->", err)
+	ok, err = e.Enforce("bob","data3","update")
+	t.Log(ok, "->", err)
+	ok, err = e.Enforce("alice","data3","update")
+	t.Log(ok, "->", err)
+	ok, err = e.Enforce("bob","data3","read")
+	t.Log(ok, "->", err)
+}
+
 func testRemoveFilteredPolicy(t *testing.T, e *casbin.Enforcer) {
-	ok,err := e.RemoveFilteredPolicy(1, "data1","write")
-	if err!=nil{
-		t.Error("remove policy failed",err)
+	ok, err := e.RemoveFilteredPolicy(1, "data1", "write")
+	if err != nil {
+		t.Error("remove policy failed", err)
 	}
 	t.Log("remove policy, result=", ok)
 
-	ok,err = e.RemoveFilteredGroupingPolicy(0, "admin")
-	if err!=nil{
-		t.Error("remove group policy failed",err)
+	ok, err = e.RemoveFilteredGroupingPolicy(0, "admin")
+	if err != nil {
+		t.Error("remove group policy failed", err)
 	}
 	t.Log("remove group policy, result=", ok)
 
@@ -139,6 +167,15 @@ func testAddPolicy(t *testing.T, e *casbin.Enforcer) {
 		t.Error("add policy failed:", err)
 	}
 	_, err = e.AddPolicy("bob", "data2", "read")
+	if err != nil {
+		t.Error("add policy failed:", err)
+	}
+
+	_, err = e.AddGroupingPolicy("bob", "admin")
+	if err != nil {
+		t.Error("add group policy failed:", err)
+	}
+	_, err = e.AddPolicy("root", "data3", "update")
 	if err != nil {
 		t.Error("add policy failed:", err)
 	}
