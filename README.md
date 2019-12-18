@@ -2,6 +2,8 @@
 
 ## aut
 > authentication 认证库
+
+- [JWT](https://github.com/IrvinYoung/gutil/blob/master/aut/jwt.go)
     
 ## auz 
 > authorization 授权库
