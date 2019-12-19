@@ -15,3 +15,8 @@
 
 - [response data, using for restful API](https://github.com/IrvinYoung/gutil/blob/master/ds/result.go)
 
+## captcha
+> 验证码
+
+- [Support dchest/captcha](https://github.com/IrvinYoung/gutil/blob/master/captcha/dchestCaptcha.go)  
+    >[dchest/captcha](https://github.com/dchest/captcha)
