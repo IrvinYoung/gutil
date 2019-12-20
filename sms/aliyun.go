@@ -16,9 +16,9 @@ type AliyunSMS struct {
 }
 
 func (s *AliyunSMS) InitSMS(params map[string]interface{}) (instance SMS, err error) {
-	regionId := params["regionId"].(string) //"cn-hangzhou"
-	accessKeyId := params["accessKeyId"].(string)
-	accessSecret := params["accessSecret"].(string)
+	regionId := params["region_id"].(string) //"cn-hangzhou"
+	accessKeyId := params["access_key_id"].(string)
+	accessSecret := params["access_secret"].(string)
 
 	s.client, err = dysmsapi.NewClientWithAccessKey(regionId, accessKeyId, accessSecret)
 	if err != nil {

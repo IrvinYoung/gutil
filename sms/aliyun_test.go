@@ -3,7 +3,7 @@ package sms
 import "testing"
 
 func TestAliyunSMS(t *testing.T) {
-	testQueryDetail(t)
+	//testQueryDetail(t)
 	testSend(t)
 }
 
