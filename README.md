@@ -3,7 +3,7 @@
 ## aut
 *authentication 认证库*
 
-- [JWT](https://github.com/IrvinYoung/gutil/aut/README_jwt.md)
+- [JWT](https://github.com/IrvinYoung/gutil/aut/)
 ## auz 
 *authorization 授权库*
 
