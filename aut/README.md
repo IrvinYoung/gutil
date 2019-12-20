@@ -11,8 +11,8 @@ import "github.com/IrvinYoung/gutil/aut"
 
 // init default inscance
 if err := aut.InitDefaultJwtEngine("<custom sign>", 6*time.Second, nil, nil); err != nil {
-		log.Fatalln(err)
-	}
+	log.Fatalln(err)
+}
 
 // create a JWT with custom data
 m := map[string]interface{}{
@@ -20,18 +20,18 @@ m := map[string]interface{}{
   "name":"alice",
 }
 JwtStr, err := aut.NewJwt(m)
-	if err != nil {
-		t.Fatal(err)
-	}
+if err != nil {
+	t.Fatal(err)
+}
 log.Println("token=",JwtStr)
 
 // verify JWT
 r, err := aut.VerifyJwt(JwtStr)
-	if err != nil {
-		log.Println("verify failed =", err)
-	} else {
-		log.Println("PASS: token content = %+v\n", r)
-	}
+if err != nil {
+	log.Println("verify failed =", err)
+} else {
+	log.Println("PASS: token content = %+v\n", r)
+}
 
 ```
 
@@ -104,28 +104,28 @@ m := map[string]interface{}{
   "id":"111",
   "name":"alice",
 }
-	JwtStr, err := aut.NewJwt(m)
-	if err != nil {
-		log.Println(err)
-	}
-	log.Println("JWT =", JwtStr)
+JwtStr, err := aut.NewJwt(m)
+if err != nil {
+	log.Println(err)
+}
+log.Println("JWT =", JwtStr)
 
 //verify
-	r, err := aut.VerifyJwt(JwtStr)
-	if err != nil {
-		log.Println("verify failed =", err)
-	} else {
-		log.Println("PASS: token content = %+v\n", r)
-	}
+r, err := aut.VerifyJwt(JwtStr)
+if err != nil {
+	log.Println("verify failed =", err)
+} else {
+	log.Println("PASS: token content = %+v\n", r)
+}
 
 //invalidate
-	aut.InvalidateJwt(m["id"], r["expire"])
+aut.InvalidateJwt(m["id"], r["expire"])
 
 //expire
-	r, err = aut.VerifyJwt(JwtStr)
-	if err != nil {
-		log.Println("EXPIRE: verify failed =", err)
-	}
+r, err = aut.VerifyJwt(JwtStr)
+if err != nil {
+	log.Println("EXPIRE: verify failed =", err)
+}
 
 ```
 
