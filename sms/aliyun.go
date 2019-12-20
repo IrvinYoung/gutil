@@ -15,10 +15,10 @@ type AliyunSMS struct {
 	client *dysmsapi.Client
 }
 
-func (s *AliyunSMS) InitSMS(params ...interface{}) (instance SMS, err error) {
-	regionId := params[0].(string) //"cn-hangzhou"
-	accessKeyId := params[1].(string)
-	accessSecret := params[2].(string)
+func (s *AliyunSMS) InitSMS(params map[string]interface{}) (instance SMS, err error) {
+	regionId := params["regionId"].(string) //"cn-hangzhou"
+	accessKeyId := params["accessKeyId"].(string)
+	accessSecret := params["accessSecret"].(string)
 
 	s.client, err = dysmsapi.NewClientWithAccessKey(regionId, accessKeyId, accessSecret)
 	if err != nil {
@@ -28,14 +28,14 @@ func (s *AliyunSMS) InitSMS(params ...interface{}) (instance SMS, err error) {
 	return
 }
 
-func (s *AliyunSMS) SendSMS(params ...interface{}) (r Result, err error) {
+func (s *AliyunSMS) SendSMS(params map[string]interface{}) (r Result, err error) {
 	request := dysmsapi.CreateSendSmsRequest()
 
 	request.Scheme = "https"
-	request.PhoneNumbers = params[0].(string)
-	request.SignName = params[1].(string)
-	request.TemplateCode = params[2].(string)
-	request.TemplateParam = params[3].(string) //json string
+	request.PhoneNumbers = params["PhoneNumber"].(string)
+	request.SignName = params["SignName"].(string)
+	request.TemplateCode = params["TemplateCode"].(string)
+	request.TemplateParam = params["TemplateParam"].(string) //json string
 
 	response, err := s.client.SendSms(request)
 	if err != nil {
@@ -53,13 +53,13 @@ func (s *AliyunSMS) SendSMS(params ...interface{}) (r Result, err error) {
 	return
 }
 
-func (s *AliyunSMS) GetDetail(params ...interface{}) (r Receipt, err error) {
+func (s *AliyunSMS) GetDetail(params map[string]interface{}) (r Receipt, err error) {
 	request := dysmsapi.CreateQuerySendDetailsRequest()
 
 	request.Scheme = "https"
-	request.PhoneNumber = params[0].(string)
-	request.SendDate = params[1].(string)
-	request.BizId = params[2].(string)
+	request.PhoneNumber = params["PhoneNumber"].(string)
+	request.SendDate = params["SendDate"].(string)
+	request.BizId = params["BizId"].(string)
 	request.CurrentPage = "1"
 	request.PageSize = "1"
 

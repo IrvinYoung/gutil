@@ -8,9 +8,9 @@ import (
 )
 
 type SMS interface {
-	InitSMS(params ...interface{}) (SMS, error)
-	SendSMS(params ...interface{}) (Result, error)
-	GetDetail(params ...interface{}) (Receipt, error)
+	InitSMS(map[string]interface{}) (SMS, error)
+	SendSMS(map[string]interface{}) (Result, error)
+	GetDetail(map[string]interface{}) (Receipt, error)
 	SupportBy() string
 	//others
 }
@@ -39,11 +39,10 @@ type Receipt struct {
 	//DONE：发送成功。
 }
 
-func Using(SMSType string, params ...interface{}) (sms SMS, err error) {
+func Using(SMSType string, params map[string]interface{}) (sms SMS, err error) {
 	switch strings.ToLower(SMSType) {
 	case "aliyun":
-		s := &AliyunSMS{}
-		sms, err = s.InitSMS(params...)
+		sms, err = AliyunSMS{}.InitSMS(params)
 	default:
 		err = fmt.Errorf("unsupported captcha type %s", SMSType)
 	}
