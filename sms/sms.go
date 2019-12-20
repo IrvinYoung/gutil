@@ -42,7 +42,7 @@ type Receipt struct {
 func Using(SMSType string, params map[string]interface{}) (sms SMS, err error) {
 	switch strings.ToLower(SMSType) {
 	case "aliyun":
-		sms, err = AliyunSMS{}.InitSMS(params)
+		sms, err = (&AliyunSMS{}).InitSMS(params)
 	default:
 		err = fmt.Errorf("unsupported captcha type %s", SMSType)
 	}
