@@ -88,13 +88,7 @@ func (cxa *CasbinXormAdapter) RemovePolicy(sec string, ptype string, rule []stri
 	if !has {
 		return
 	}
-	n, err := cxa.getSession().Delete(p)
-	if err != nil {
-		return
-	}
-	if n != 1 {
-		err = fmt.Errorf("remove policy failed, record affect count is %d", n)
-	}
+	_, err = cxa.getSession().Delete(p)
 	return
 }
 
