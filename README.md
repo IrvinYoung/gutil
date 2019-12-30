@@ -3,7 +3,9 @@
 ## aut
 *authentication 认证库*
 
-- [JWT](https://github.com/IrvinYoung/gutil/tree/master/aut/)
+- [JWT](https://github.com/IrvinYoung/gutil/blob/master/aut/README_JWT.md)
+- [Google Authenticator](https://github.com/IrvinYoung/gutil/blob/master/aut/README_GoogleAuth.md)
+
 ## auz 
 *authorization 授权库*
 
@@ -18,5 +20,10 @@
 *验证码*
 
 - [Support dchest/captcha](https://github.com/IrvinYoung/gutil/blob/master/captcha/dchestCaptcha.go)  
-    
-    >[dchest/captcha](https://github.com/dchest/captcha)
+  
+    >[dchest/captcha](https://github.com/dchest/captcha)             
+
+## SMS
+*短信服务库；不定期添加支持的第三方服务*
+
+- [aliyun](https://github.com/IrvinYoung/gutil/blob/master/sms/aliyun.go)
