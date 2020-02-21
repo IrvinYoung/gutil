@@ -13,5 +13,7 @@ func TestCryptoCurrency(t *testing.T) {
 	priv,err := DecryptPrivKey("passwordpassword", "salt", p)
 	t.Logf("priv=%s err=%v\n",priv,err)
 
+	//account check
+	t.Logf("%s check=%v\n",a,cc.IsValidAccount(a))
 
 }

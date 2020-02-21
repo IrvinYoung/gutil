@@ -4,10 +4,15 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/shopspring/decimal"
+	"regexp"
 )
 
 type Ethereum struct {
 }
+
+var (
+	ReEthereumAccount = regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
+)
 
 //basic
 func (e *Ethereum) Name() string {
@@ -38,7 +43,10 @@ func (e *Ethereum) AllocAccount(password, salt string) (addr, priv string, err e
 	return
 }
 
-func (e *Ethereum) IsValidAccount(addr string) bool                      { return false }
+func (e *Ethereum) IsValidAccount(addr string) bool {
+	return ReEthereumAccount.MatchString(addr)
+}
+
 func (e *Ethereum) BalanceOf(addr string) (b decimal.Decimal, err error) { return }
 
 //block
