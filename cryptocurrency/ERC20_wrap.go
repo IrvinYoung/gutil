@@ -1,6 +1,7 @@
 package cryptocurrency
 
 import (
+	"errors"
 	"github.com/IrvinYoung/gutil/cryptocurrency/ERC20"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -21,6 +22,23 @@ type EthToken struct {
 	totalSupply decimal.Decimal
 
 	token *ERC20.ERC20
+}
+
+func InitEthereumTokenClient(host,addr string) (et *EthToken, err error) {
+	nec, err := InitEthereumClient(host)
+	if err != nil {
+		return
+	}
+	if !nec.IsValidAccount(addr) {
+		err = errors.New("contract address is invalid")
+		return
+	}
+	et = &EthToken{
+		Ethereum: nec,
+		Contract: addr,
+	}
+	et.token, err = ERC20.NewERC20(common.HexToAddress(addr), nec.c)
+	return
 }
 
 func (et *EthToken) Close() {

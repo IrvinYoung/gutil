@@ -85,7 +85,13 @@ func (e *Ethereum) IsValidAccount(addr string) bool {
 }
 
 func (e *Ethereum) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, err error) {
-	amount, err := e.c.BalanceAt(e.ctx, common.HexToAddress(addr), big.NewInt(int64(blkNum)))
+	var blk *big.Int
+	if blkNum == 0 {
+		blk = nil
+	} else {
+		blk = big.NewInt(int64(blkNum))
+	}
+	amount, err := e.c.BalanceAt(e.ctx, common.HexToAddress(addr), blk)
 	if err != nil {
 		return
 	}

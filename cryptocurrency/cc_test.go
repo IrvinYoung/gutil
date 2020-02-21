@@ -1,6 +1,8 @@
 package cryptocurrency
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestCryptoCurrencyEthereum(t *testing.T) {
 	var cc CryptoCurrency
@@ -28,8 +30,9 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	cc = e
 	t.Logf("%s\n", cc.Symbol())
 
-	//decimal
-	t.Logf("decimal of %s = %d\n", cc.Symbol(), cc.Decimal())
+	//eth info
+	t.Logf("name=%s symbol=%s decimal=%d total_supply=%s\n",
+		cc.Name(), cc.Symbol(), cc.Decimal(), cc.TotalSupply().String())
 
 	//token
 	token, err := e.TokenInstance("0x6aa0cfdEFFefDd4968Cf550f9160D78AF9afd65F")
@@ -37,9 +40,16 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer token.(*EthToken).Close()
+
 	//token info
 	t.Logf("token name=%s symbol=%s decimal=%d total_supply=%s\n",
-		token.Name(), token.Symbol(), token.Decimal(),token.TotalSupply().String())
+		token.Name(), token.Symbol(), token.Decimal(), token.TotalSupply().String())
 
-
+	//balance
+	b, err := cc.BalanceOf("0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", 0)
+	t.Logf("eth balance of %s -> %s %v\n",
+		"0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", b.String(), err)
+	b, err = token.BalanceOf("0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", 0)
+	t.Logf("token balance of %s -> %s %v\n",
+		"0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", b.String(), err)
 }
