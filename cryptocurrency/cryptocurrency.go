@@ -3,6 +3,7 @@ package cryptocurrency
 import (
 	"encoding/hex"
 	"errors"
+	"github.com/IrvinYoung/gutil/crypto"
 	"github.com/shopspring/decimal"
 )
 
@@ -60,7 +61,7 @@ func PasswordCheck(pwd, salt string) (err error) {
 
 func encryptPrivKey(pwd, salt, from string) (to string, err error) {
 	buf := append([]byte(salt), []byte(from)...)
-	ciperText, err := utils.AesEncrypt(buf, []byte(pwd))
+	ciperText, err := crypto.AesEncrypt(buf, []byte(pwd))
 	if err != nil {
 		return
 	}
@@ -73,7 +74,7 @@ func DecryptPrivKey(pwd, salt, from string) (to string, err error) {
 	if err != nil {
 		return
 	}
-	origText, err := utils.AesDecrypt(ciperText, []byte(pwd))
+	origText, err := crypto.AesDecrypt(ciperText, []byte(pwd))
 	if err != nil {
 		return
 	}

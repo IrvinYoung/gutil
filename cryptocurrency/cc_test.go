@@ -6,7 +6,12 @@ func TestCryptoCurrency(t *testing.T) {
 	var cc CryptoCurrency
 	cc = &Ethereum{}
 
-	a, p, err := cc.AllocAccount("password", "salt")
+	//get account
+	a, p, err := cc.AllocAccount("passwordpassword", "salt")
 	t.Logf("account: addr=%s priv=%s err=%v\n", a, p, err)
+	//decrypt private key
+	priv,err := DecryptPrivKey("passwordpassword", "salt", p)
+	t.Logf("priv=%s err=%v\n",priv,err)
+
 
 }

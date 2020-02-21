@@ -33,11 +33,8 @@ func (e *Ethereum) AllocAccount(password, salt string) (addr, priv string, err e
 	//address
 	address := crypto.PubkeyToAddress(privateKeyECDSA.PublicKey)
 	addr = address.String()
-	//encrypt priv
-	//priv, err = encryptPrivKey(pwd, salt, priv)
-	////println("2. encrypt=", priv, "err=", err)
-	////aa, err := DecryptPrivKey(pwd, salt, priv)
-	////println("3. encrypt=", aa, "err=", err)
+	//encrypt private key
+	priv, err = encryptPrivKey(password, salt, priv)
 	return
 }
 
