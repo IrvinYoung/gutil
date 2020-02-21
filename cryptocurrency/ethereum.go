@@ -2,17 +2,27 @@ package cryptocurrency
 
 import (
 	"context"
+	"github.com/IrvinYoung/gutil/cryptocurrency/ERC20"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/shopspring/decimal"
+	"log"
+	"math/big"
 	"regexp"
 )
 
 type Ethereum struct {
-	ctx  context.Context
-	c    *ethclient.Client
-	Host string
+	ctx context.Context
+	c   *ethclient.Client
+	t   *ERC20.ERC20
+
+	isToken  bool
+	Host     string
+	Contract string
+	dcm      int64
 }
 
 var (
@@ -20,16 +30,21 @@ var (
 )
 
 func InitEthereumClient(host string) (e *Ethereum, err error) {
-	e = &Ethereum{Host: host}
+	e = &Ethereum{Host: host, isToken: false, dcm: -1}
 	e.ctx = context.Background()
 	e.c, err = ethclient.DialContext(e.ctx, e.Host)
 	return
 }
 
 func (e *Ethereum) Init() (err error) {
+	e.isToken, e.dcm = false, -1
 	e.ctx = context.Background()
 	e.c, err = ethclient.DialContext(e.ctx, e.Host)
 	return
+}
+
+func (e *Ethereum) IsToken() bool {
+	return e.isToken
 }
 
 func (e *Ethereum) Close() {
@@ -38,14 +53,41 @@ func (e *Ethereum) Close() {
 
 //basic
 func (e *Ethereum) Name() string {
-	return "Ethereum"
+	if !e.isToken {
+		return "Ethereum"
+	}
+	name, err := e.t.Name(&bind.CallOpts{})
+	if err != nil {
+		log.Println("get token name failed,", err)
+	}
+	return name
 }
 
 func (e *Ethereum) Symbol() string {
-	return "eth"
+	if !e.isToken {
+		return "eth"
+	}
+	symbol, err := e.t.Symbol(&bind.CallOpts{})
+	if err != nil {
+		log.Println("get token symbol failed,", err)
+	}
+	return symbol
 }
 func (e *Ethereum) Decimal() int64 {
-	return 18
+	if !e.isToken {
+		e.dcm = 18
+		return e.dcm
+	}
+	if e.dcm >= 0 {
+		return e.dcm
+	}
+	d, err := e.t.Decimals(&bind.CallOpts{})
+	if err != nil {
+		log.Println("get token decimal failed,", err)
+		return 18
+	}
+	e.dcm = d.Int64()
+	return e.dcm
 }
 
 //account
@@ -69,7 +111,20 @@ func (e *Ethereum) IsValidAccount(addr string) bool {
 	return ReEthereumAccount.MatchString(addr)
 }
 
-func (e *Ethereum) BalanceOf(addr string) (b decimal.Decimal, err error) {
+func (e *Ethereum) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, err error) {
+	var amount *big.Int
+	if !e.isToken {
+		amount, err = e.c.BalanceAt(e.ctx, common.HexToAddress(addr), big.NewInt(int64(blkNum)))
+	} else {
+		amount, err = e.t.BalanceOf(&bind.CallOpts{}, common.HexToAddress(addr))
+		if err != nil {
+			return
+		}
+	}
+	if err != nil {
+		return
+	}
+	b = decimal.NewFromBigInt(amount, 0)
 	return
 }
 

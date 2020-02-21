@@ -16,7 +16,7 @@ type CryptoCurrency interface {
 	//account
 	AllocAccount(password, salt string) (addr, priv string, err error)
 	IsValidAccount(addr string) bool
-	BalanceOf(addr string) (b decimal.Decimal, err error)
+	BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, err error)
 
 	//block
 	LastBlockNumber() (blkNum uint64, err error)
@@ -29,6 +29,7 @@ type CryptoCurrency interface {
 
 	//token
 	TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error)
+	IsToken() bool
 	//others
 	EstimateFee(map[string]interface{}) (fee decimal.Decimal, err error)
 }
