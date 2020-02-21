@@ -1,18 +1,36 @@
 package cryptocurrency
 
 import (
+	"context"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/shopspring/decimal"
 	"regexp"
 )
 
 type Ethereum struct {
+	ctx  context.Context
+	c    *ethclient.Client
+	Host string
 }
 
 var (
 	ReEthereumAccount = regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
 )
+
+func InitEthereumClient(host string) (e *Ethereum, err error) {
+	e = &Ethereum{Host: host}
+	e.ctx = context.Background()
+	e.c, err = ethclient.DialContext(e.ctx, e.Host)
+	return
+}
+
+func (e *Ethereum) Init() (err error) {
+	e.ctx = context.Background()
+	e.c, err = ethclient.DialContext(e.ctx, e.Host)
+	return
+}
 
 //basic
 func (e *Ethereum) Name() string {
@@ -47,7 +65,9 @@ func (e *Ethereum) IsValidAccount(addr string) bool {
 	return ReEthereumAccount.MatchString(addr)
 }
 
-func (e *Ethereum) BalanceOf(addr string) (b decimal.Decimal, err error) { return }
+func (e *Ethereum) BalanceOf(addr string) (b decimal.Decimal, err error) {
+	return
+}
 
 //block
 func (e *Ethereum) LastBlockNumber() (blkNum uint64, err error)             { return }
