@@ -2,14 +2,13 @@ package cryptocurrency
 
 import (
 	"context"
+	"errors"
 	"github.com/IrvinYoung/gutil/cryptocurrency/ERC20"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/shopspring/decimal"
-	"log"
 	"math/big"
 	"regexp"
 )
@@ -19,10 +18,7 @@ type Ethereum struct {
 	c   *ethclient.Client
 	t   *ERC20.ERC20
 
-	isToken  bool
-	Host     string
-	Contract string
-	dcm      int64
+	Host string
 }
 
 var (
@@ -30,21 +26,20 @@ var (
 )
 
 func InitEthereumClient(host string) (e *Ethereum, err error) {
-	e = &Ethereum{Host: host, isToken: false, dcm: -1}
+	e = &Ethereum{Host: host}
 	e.ctx = context.Background()
 	e.c, err = ethclient.DialContext(e.ctx, e.Host)
 	return
 }
 
 func (e *Ethereum) Init() (err error) {
-	e.isToken, e.dcm = false, -1
 	e.ctx = context.Background()
 	e.c, err = ethclient.DialContext(e.ctx, e.Host)
 	return
 }
 
 func (e *Ethereum) IsToken() bool {
-	return e.isToken
+	return false
 }
 
 func (e *Ethereum) Close() {
@@ -53,41 +48,15 @@ func (e *Ethereum) Close() {
 
 //basic
 func (e *Ethereum) Name() string {
-	if !e.isToken {
-		return "Ethereum"
-	}
-	name, err := e.t.Name(&bind.CallOpts{})
-	if err != nil {
-		log.Println("get token name failed,", err)
-	}
-	return name
+	return "Ethereum"
 }
 
 func (e *Ethereum) Symbol() string {
-	if !e.isToken {
-		return "eth"
-	}
-	symbol, err := e.t.Symbol(&bind.CallOpts{})
-	if err != nil {
-		log.Println("get token symbol failed,", err)
-	}
-	return symbol
+	return "eth"
+
 }
 func (e *Ethereum) Decimal() int64 {
-	if !e.isToken {
-		e.dcm = 18
-		return e.dcm
-	}
-	if e.dcm >= 0 {
-		return e.dcm
-	}
-	d, err := e.t.Decimals(&bind.CallOpts{})
-	if err != nil {
-		log.Println("get token decimal failed,", err)
-		return 18
-	}
-	e.dcm = d.Int64()
-	return e.dcm
+	return 18
 }
 
 //account
@@ -112,19 +81,11 @@ func (e *Ethereum) IsValidAccount(addr string) bool {
 }
 
 func (e *Ethereum) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, err error) {
-	var amount *big.Int
-	if !e.isToken {
-		amount, err = e.c.BalanceAt(e.ctx, common.HexToAddress(addr), big.NewInt(int64(blkNum)))
-	} else {
-		amount, err = e.t.BalanceOf(&bind.CallOpts{}, common.HexToAddress(addr))
-		if err != nil {
-			return
-		}
-	}
+	amount, err := e.c.BalanceAt(e.ctx, common.HexToAddress(addr), big.NewInt(int64(blkNum)))
 	if err != nil {
 		return
 	}
-	b = decimal.NewFromBigInt(amount, 0)
+	b = ToDecimal(amount, e.Decimal())
 	return
 }
 
@@ -138,7 +99,66 @@ func (e *Ethereum) TransactionsInBlocks(from, to uint64) (txs []*TransactionReco
 func (e *Ethereum) Transfer(from, to map[string]decimal.Decimal) (txHash string, err error)    { return }
 
 //token
-func (e *Ethereum) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error) { return }
+func (e *Ethereum) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error) {
+	var addr string
+	switch tokenInfo.(type) {
+	case string:
+		addr = tokenInfo.(string)
+	default:
+		err = errors.New("need contract address")
+		return
+	}
+	if !e.IsValidAccount(addr) {
+		err = errors.New("contract address is invalid")
+		return
+	}
+
+	nec, err := InitEthereumClient(e.Host)
+	if err != nil {
+		return
+	}
+	token := &EthToken{
+		Ethereum: nec,
+		Contract: addr,
+	}
+	token.token, err = ERC20.NewERC20(common.HexToAddress(addr), nec.c)
+	return
+}
 
 //others
 func (e *Ethereum) EstimateFee(map[string]interface{}) (fee decimal.Decimal, err error) { return }
+
+func ToDecimal(ivalue interface{}, decimals int64) decimal.Decimal {
+	value := new(big.Int)
+	switch v := ivalue.(type) {
+	case string:
+		value.SetString(v, 10)
+	case *big.Int:
+		value = v
+	}
+	mul := decimal.NewFromFloat(float64(10)).Pow(decimal.NewFromFloat(float64(decimals)))
+	num, _ := decimal.NewFromString(value.String())
+	result := num.Div(mul)
+	return result
+}
+
+func ToWei(iamount interface{}, decimals int64) *big.Int {
+	amount := decimal.NewFromFloat(0)
+	switch v := iamount.(type) {
+	case string:
+		amount, _ = decimal.NewFromString(v)
+	case float64:
+		amount = decimal.NewFromFloat(v)
+	case int64:
+		amount = decimal.NewFromFloat(float64(v))
+	case decimal.Decimal:
+		amount = v
+	case *decimal.Decimal:
+		amount = *v
+	}
+	mul := decimal.NewFromFloat(float64(10)).Pow(decimal.NewFromFloat(float64(decimals)))
+	result := amount.Mul(mul)
+	wei := new(big.Int)
+	wei.SetString(result.String(), 10)
+	return wei
+}
