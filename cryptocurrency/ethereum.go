@@ -32,6 +32,10 @@ func (e *Ethereum) Init() (err error) {
 	return
 }
 
+func (e *Ethereum) Close() {
+	e.c.Close()
+}
+
 //basic
 func (e *Ethereum) Name() string {
 	return "Ethereum"
