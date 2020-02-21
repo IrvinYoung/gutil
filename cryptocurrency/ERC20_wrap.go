@@ -14,12 +14,31 @@ import (
 type EthToken struct {
 	*Ethereum
 
-	Contract string
-	name     string
-	symbol   string
-	dcm      int64
+	Contract    string
+	name        string
+	symbol      string
+	dcm         int64
+	totalSupply decimal.Decimal
 
 	token *ERC20.ERC20
+}
+
+func (et *EthToken) Close() {
+	et.Ethereum.Close()
+}
+
+func (et *EthToken) TotalSupply() (total decimal.Decimal) {
+	if et.totalSupply.IsPositive() {
+		return et.totalSupply
+	}
+	amount, err := et.token.TotalSupply(&bind.CallOpts{})
+	if err != nil {
+		log.Println("get token name failed,", err)
+		return
+	}
+	et.totalSupply = ToDecimal(amount, et.Decimal())
+	total = et.totalSupply
+	return
 }
 
 //basic
@@ -87,7 +106,7 @@ func (et *EthToken) Transfer(from, to map[string]decimal.Decimal) (txHash string
 
 //token
 func (et *EthToken) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error) { return }
-func (et *EthToken) IsToken() bool                                                      { return false }
+func (et *EthToken) IsToken() bool                                                      { return true }
 
 //others
 func (et *EthToken) EstimateFee(map[string]interface{}) (fee decimal.Decimal, err error) { return }

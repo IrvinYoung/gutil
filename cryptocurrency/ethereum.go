@@ -46,6 +46,10 @@ func (e *Ethereum) Close() {
 	e.c.Close()
 }
 
+func (e *Ethereum) TotalSupply() decimal.Decimal {
+	return decimal.Zero
+}
+
 //basic
 func (e *Ethereum) Name() string {
 	return "Ethereum"
@@ -122,6 +126,7 @@ func (e *Ethereum) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err 
 		Contract: addr,
 	}
 	token.token, err = ERC20.NewERC20(common.HexToAddress(addr), nec.c)
+	cc = token
 	return
 }
 

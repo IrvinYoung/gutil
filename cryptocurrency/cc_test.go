@@ -28,9 +28,18 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	cc = e
 	t.Logf("%s\n", cc.Symbol())
 
-	//token
-
 	//decimal
 	t.Logf("decimal of %s = %d\n", cc.Symbol(), cc.Decimal())
+
+	//token
+	token, err := e.TokenInstance("0x6aa0cfdEFFefDd4968Cf550f9160D78AF9afd65F")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer token.(*EthToken).Close()
+	//token info
+	t.Logf("token name=%s symbol=%s decimal=%d total_supply=%s\n",
+		token.Name(), token.Symbol(), token.Decimal(),token.TotalSupply().String())
+
 
 }

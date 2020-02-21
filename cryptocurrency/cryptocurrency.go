@@ -12,6 +12,7 @@ type CryptoCurrency interface {
 	Name() string
 	Symbol() string
 	Decimal() int64
+	TotalSupply() decimal.Decimal
 
 	//account
 	AllocAccount(password, salt string) (addr, priv string, err error)
