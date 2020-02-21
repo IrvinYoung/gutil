@@ -19,7 +19,7 @@
 ## captcha
 *验证码*
 
-- [Support dchest/captcha](https://github.com/IrvinYoung/gutil/blob/master/captcha/dchestCaptcha.go)  
+- [Implemented by dchest/captcha](https://github.com/IrvinYoung/gutil/blob/master/captcha/dchestCaptcha.go)  
   
     >[dchest/captcha](https://github.com/dchest/captcha)             
 
@@ -27,3 +27,9 @@
 *短信服务库；不定期添加支持的第三方服务*
 
 - [aliyun](https://github.com/IrvinYoung/gutil/blob/master/sms/aliyun.go)
+
+## Email
+*电子邮件服务*
+
+- [Implemented by gomail]()
+    > [gomail](https://github.com/go-gomail/gomail)
