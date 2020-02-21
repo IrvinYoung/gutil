@@ -26,5 +26,11 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	}
 	defer e.Close()
 	cc = e
-	t.Logf("%s\n",cc.Symbol())
+	t.Logf("%s\n", cc.Symbol())
+
+	//token
+
+	//decimal
+	t.Logf("decimal of %s = %d\n", cc.Symbol(), cc.Decimal())
+
 }
