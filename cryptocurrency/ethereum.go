@@ -119,8 +119,16 @@ func (e *Ethereum) LastBlockNumber() (blkNum uint64, err error) {
 	blkNum = hexutil.MustDecodeUint64(num)
 	return
 }
-func (e *Ethereum) BlockByNumber(blkNum uint64) (bi interface{}, err error) { return }
-func (e *Ethereum) BlockByHash(blkHash string) (bi interface{}, err error)  { return }
+
+func (e *Ethereum) BlockByNumber(blkNum uint64) (bi interface{}, err error) {
+	b, err := e.c.BlockByNumber(e.ctx, big.NewInt(int64(blkNum)))
+	if err != nil {
+		return
+	}
+	bi = b
+	return
+}
+func (e *Ethereum) BlockByHash(blkHash string) (bi interface{}, err error) { return }
 
 //transaction
 func (e *Ethereum) TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error) { return }

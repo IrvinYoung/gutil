@@ -59,4 +59,8 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	t.Logf("last eth blk=%d %v\n", blk, err)
 	blk, err = token.LastBlockNumber()
 	t.Logf("last token blk=%d %v\n", blk, err)
+
+	//get block by number
+	block,err := cc.BlockByNumber(blk)
+	t.Logf("blk content : %+v %v\n",block,err)
 }
