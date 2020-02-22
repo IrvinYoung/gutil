@@ -148,11 +148,16 @@ func (et *EthToken) TransactionsInBlocks(from, to uint64) (txs []*TransactionRec
 	}
 	return
 }
+
 func (et *EthToken) Transfer(from, to map[string]decimal.Decimal) (txHash string, err error) { return }
 
 //token
-func (et *EthToken) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error) { return }
-func (et *EthToken) IsToken() bool                                                      { return true }
+func (et *EthToken) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error) {
+	cc, err = nil, errors.New("current instance is token, can not init another")
+	return
+}
+
+func (et *EthToken) IsToken() bool { return true }
 
 //others
 func (et *EthToken) EstimateFee(map[string]interface{}) (fee decimal.Decimal, err error) { return }

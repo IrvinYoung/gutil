@@ -204,7 +204,9 @@ func (e *Ethereum) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error) {
 	return
 }
 
-func (e *Ethereum) Transfer(from, to map[string]decimal.Decimal) (txHash string, err error) { return }
+func (e *Ethereum) Transfer(from, to map[string]decimal.Decimal) (txHash string, err error) {
+	return
+}
 
 //token
 func (e *Ethereum) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error) {
