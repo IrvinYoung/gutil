@@ -62,5 +62,13 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 
 	//get block by number
 	block,err := cc.BlockByNumber(blk)
-	t.Logf("blk content : %+v %v\n",block,err)
+	t.Logf("eth - blk content number: %+v %v\n",block,err)
+	block,err = token.BlockByNumber(blk)
+	t.Logf("token - blk content number: %+v %v\n",block,err)
+
+	//get block by hash
+	block,err = cc.BlockByHash("0x650867ef48d96a1251d4950a1375fc810e50d7023dc8a7f003e3f4ab285d9958")
+	t.Logf("eth - blk content by hash: %+v %v\n",block,err)
+	block,err = token.BlockByHash("0x650867ef48d96a1251d4950a1375fc810e50d7023dc8a7f003e3f4ab285d9958")
+	t.Logf("token - blk content by hash: %+v %v\n",block,err)
 }

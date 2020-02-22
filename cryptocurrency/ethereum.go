@@ -128,7 +128,14 @@ func (e *Ethereum) BlockByNumber(blkNum uint64) (bi interface{}, err error) {
 	bi = b
 	return
 }
-func (e *Ethereum) BlockByHash(blkHash string) (bi interface{}, err error) { return }
+func (e *Ethereum) BlockByHash(blkHash string) (bi interface{}, err error) {
+	b, err := e.c.BlockByHash(e.ctx, common.HexToHash(blkHash))
+	if err != nil {
+		return
+	}
+	bi = b
+	return
+}
 
 //transaction
 func (e *Ethereum) TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error) { return }

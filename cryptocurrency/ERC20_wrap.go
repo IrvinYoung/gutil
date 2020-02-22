@@ -104,10 +104,6 @@ func (et *EthToken) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, er
 	return
 }
 
-//block
-func (et *EthToken) BlockByNumber(blkNum uint64) (bi interface{}, err error) { return }
-func (et *EthToken) BlockByHash(blkHash string) (bi interface{}, err error)  { return }
-
 //transaction
 func (et *EthToken) TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error) {
 	return
