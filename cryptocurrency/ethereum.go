@@ -18,9 +18,10 @@ import (
 )
 
 type Ethereum struct {
-	ctx context.Context
-	c   *ethclient.Client
-	t   *ERC20.ERC20
+	ctx     context.Context
+	c       *ethclient.Client
+	t       *ERC20.ERC20
+	chainID *big.Int
 
 	Host string
 }
@@ -31,14 +32,16 @@ var (
 
 func InitEthereumClient(host string) (e *Ethereum, err error) {
 	e = &Ethereum{Host: host}
-	e.ctx = context.Background()
-	e.c, err = ethclient.DialContext(e.ctx, e.Host)
+	err = e.Init()
 	return
 }
 
 func (e *Ethereum) Init() (err error) {
 	e.ctx = context.Background()
-	e.c, err = ethclient.DialContext(e.ctx, e.Host)
+	if e.c, err = ethclient.DialContext(e.ctx, e.Host); err != nil {
+		return
+	}
+	e.chainID, err = e.c.NetworkID(e.ctx)
 	return
 }
 
@@ -150,6 +153,7 @@ func (e *Ethereum) TransactionsInBlocks(from, to uint64) (txs []*TransactionReco
 	}
 	for k, v := range b.Transactions() {
 		to := v.To().Hex()
+		//msg, _ := v.AsMessage()
 		amount, _ := ToDecimal(v.Value(), e.Decimal())
 		log.Printf("%d\t%s -> %s %s %s\n", k, "", to, v.Hash().Hex(), amount.String())
 	}
