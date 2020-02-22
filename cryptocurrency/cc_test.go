@@ -20,7 +20,6 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 
 	//init client
 	cc, err = InitEthereumClient("http://127.0.0.1:7545")
-	t.Logf("%s %v\n", cc.Name(), err)
 	cc.(*Ethereum).Close()
 	e := &Ethereum{Host: "http://127.0.0.1:7545"}
 	if err = e.Init(); err != nil {
@@ -28,7 +27,6 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	}
 	defer e.Close()
 	cc = e
-	t.Logf("%s\n", cc.Symbol())
 
 	//eth info
 	t.Logf("name=%s symbol=%s decimal=%d total_supply=%s\n",
@@ -40,6 +38,9 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer token.(*EthToken).Close()
+	a,p,err = token.AllocAccount("passwordpassword", "salt")
+	t.Logf("account: addr=%s priv=%s err=%v\n", a, p, err)
+	t.Logf("%s is valid %v\n",a,token.IsValidAccount(a))
 
 	//token info
 	t.Logf("token name=%s symbol=%s decimal=%d total_supply=%s\n",
@@ -52,4 +53,10 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	b, err = token.BalanceOf("0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", 0)
 	t.Logf("token balance of %s -> %s %v\n",
 		"0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", b.String(), err)
+
+	//last block number
+	blk, err := cc.LastBlockNumber()
+	t.Logf("last eth blk=%d %v\n", blk, err)
+	blk, err = token.LastBlockNumber()
+	t.Logf("last token blk=%d %v\n", blk, err)
 }

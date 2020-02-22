@@ -2,12 +2,14 @@ package cryptocurrency
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/IrvinYoung/gutil/cryptocurrency/ERC20"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/shopspring/decimal"
 	"math/big"
 	"regexp"
@@ -100,7 +102,23 @@ func (e *Ethereum) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, err
 }
 
 //block
-func (e *Ethereum) LastBlockNumber() (blkNum uint64, err error)             { return }
+func (e *Ethereum) LastBlockNumber() (blkNum uint64, err error) {
+	//s, err := e.c.SyncProgress(e.ctx)	//XXX: not work? why?
+	c, err := rpc.DialContext(e.ctx, e.Host)
+	if err != nil {
+		return
+	}
+	var raw json.RawMessage
+	if err = c.CallContext(e.ctx, &raw, "eth_blockNumber"); err != nil {
+		return
+	}
+	var num string
+	if err = json.Unmarshal(raw, &num); err != nil {
+		return
+	}
+	blkNum = hexutil.MustDecodeUint64(num)
+	return
+}
 func (e *Ethereum) BlockByNumber(blkNum uint64) (bi interface{}, err error) { return }
 func (e *Ethereum) BlockByHash(blkHash string) (bi interface{}, err error)  { return }
 

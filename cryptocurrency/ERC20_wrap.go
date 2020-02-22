@@ -95,13 +95,6 @@ func (et *EthToken) Decimal() int64 {
 	return et.dcm
 }
 
-//account
-func (et *EthToken) AllocAccount(password, salt string) (addr, priv string, err error) {
-	return et.Ethereum.AllocAccount(password, salt)
-}
-func (et *EthToken) IsValidAccount(addr string) bool {
-	return et.Ethereum.IsValidAccount(addr)
-}
 func (et *EthToken) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, err error) {
 	amount, err := et.token.BalanceOf(&bind.CallOpts{}, common.HexToAddress(addr))
 	if err != nil {
@@ -112,8 +105,8 @@ func (et *EthToken) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, er
 }
 
 //block
-func (et *EthToken) LastBlockNumber() (blkNum uint64, err error)             { return }
-func (et *EthToken) BlockByNumber(blkNum uint64) (bi interface{}, err error) { return }
+//func (et *EthToken) LastBlockNumber() (blkNum uint64, err error)             { return }
+//func (et *EthToken) BlockByNumber(blkNum uint64) (bi interface{}, err error) { return }
 func (et *EthToken) BlockByHash(blkHash string) (bi interface{}, err error)  { return }
 
 //transaction
