@@ -36,7 +36,7 @@ type CryptoCurrency interface {
 }
 
 type TransactionRecord struct {
-	TokenFlag   string          `json:"token_flag"` //token 识别标记，如果为主链币交易，为空
+	TokenFlag   string          `json:"token_flag"` //识别标记
 	Index       uint64          `json:"-"`          //tx index
 	LogIndex    uint64          `json:"-"`          //log index
 	From        string          `json:"from"`

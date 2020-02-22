@@ -2,11 +2,12 @@ package cryptocurrency
 
 import (
 	"errors"
+	"log"
+
 	"github.com/IrvinYoung/gutil/cryptocurrency/ERC20"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/shopspring/decimal"
-	"log"
 )
 
 //wrap ERC20.go
@@ -106,6 +107,45 @@ func (et *EthToken) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, er
 
 //transaction
 func (et *EthToken) TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error) {
+	if from > to {
+		err = errors.New("params error")
+		return
+	}
+	txs = make([]*TransactionRecord, 0)
+	ti, err := et.token.FilterTransfer(&bind.FilterOpts{
+		Start:   from,
+		End:     &to,
+		Context: et.ctx,
+	}, nil, nil)
+	if err != nil {
+		return
+	}
+	defer ti.Close()
+	var (
+		amount decimal.Decimal
+	)
+	for ti.Next() {
+		if ti.Event.Raw.Removed {
+			continue
+		}
+		if amount, err = ToDecimal(ti.Event.Value, et.Decimal()); err != nil {
+			log.Println("get token value failed,", ti.Event.Raw.TxHash.Hex(), err)
+			continue
+		}
+		tx := &TransactionRecord{
+			TokenFlag:   et.Symbol(),
+			Index:       uint64(ti.Event.Raw.TxIndex),
+			LogIndex:    uint64(ti.Event.Raw.Index),
+			From:        ti.Event.From.Hex(),
+			To:          ti.Event.To.Hex(),
+			Value:       amount,
+			BlockHash:   ti.Event.Raw.BlockHash.Hex(),
+			TxHash:      ti.Event.Raw.TxHash.Hex(),
+			BlockNumber: ti.Event.Raw.BlockNumber,
+			Data:        ti.Event.Raw.Data,
+		}
+		txs = append(txs, tx)
+	}
 	return
 }
 func (et *EthToken) Transfer(from, to map[string]decimal.Decimal) (txHash string, err error) { return }

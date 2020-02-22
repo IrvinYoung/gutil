@@ -4,17 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/IrvinYoung/gutil/cryptocurrency/ERC20"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/shopspring/decimal"
 	"log"
 	"math/big"
 	"regexp"
 	"strings"
+
+	"github.com/IrvinYoung/gutil/cryptocurrency/ERC20"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/shopspring/decimal"
 )
 
 type Ethereum struct {
@@ -130,6 +132,7 @@ func (e *Ethereum) BlockByNumber(blkNum uint64) (bi interface{}, err error) {
 	if err != nil {
 		return
 	}
+	b.SanityCheck()
 	bi = b
 	return
 }
@@ -144,21 +147,63 @@ func (e *Ethereum) BlockByHash(blkHash string) (bi interface{}, err error) {
 
 //transaction
 func (e *Ethereum) TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error) {
-	b, err := e.c.BlockByNumber(e.ctx, big.NewInt(int64(from)))
-	if err != nil {
+	if from > to {
+		err = errors.New("params error")
 		return
 	}
-	if err != nil {
-		return
-	}
-	for k, v := range b.Transactions() {
-		to := v.To().Hex()
-		//msg, _ := v.AsMessage()
-		amount, _ := ToDecimal(v.Value(), e.Decimal())
-		log.Printf("%d\t%s -> %s %s %s\n", k, "", to, v.Hash().Hex(), amount.String())
+	txs = make([]*TransactionRecord, 0)
+	var tmp []*TransactionRecord
+	for i := from; i <= to; i++ {
+		if tmp, err = e.getBlkTxs(i); err != nil {
+			return
+		}
+		txs = append(txs, tmp...)
 	}
 	return
 }
+
+func (e *Ethereum) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error) {
+	txs = make([]*TransactionRecord, 0)
+	b, err := e.c.BlockByNumber(e.ctx, big.NewInt(int64(blk)))
+	if err != nil {
+		return
+	}
+	var (
+		msg    types.Message
+		amount decimal.Decimal
+	)
+	for k, v := range b.Transactions() {
+		//todo: maybe some transaction is invalid
+		if msg, err = v.AsMessage(types.NewEIP155Signer(e.chainID)); err != nil {
+			log.Println("get tx msg failed,", v.Hash().Hex(), err)
+			continue
+		}
+		if amount, err = ToDecimal(v.Value(), e.Decimal()); err != nil {
+			log.Println("get tx value failed,", v.Hash().Hex(), err)
+			continue
+		}
+		tx := &TransactionRecord{
+			TokenFlag:   e.Symbol(),
+			Index:       uint64(k),
+			From:        msg.From().Hex(),
+			Value:       amount,
+			BlockHash:   b.Hash().Hex(),
+			TxHash:      v.Hash().Hex(),
+			BlockNumber: b.NumberU64(),
+			TimeStamp:   int64(b.Time()),
+		}
+		if msg.To() != nil {
+			tx.To = msg.To().Hex()
+		} else {
+			tx.To = "" //new contract
+		}
+		txs = append(txs, tx)
+		//log.Printf("%d\t%s : %s -> %s %s\n",
+		//	k, tx.TxHash, tx.From, tx.To, tx.Value.String())
+	}
+	return
+}
+
 func (e *Ethereum) Transfer(from, to map[string]decimal.Decimal) (txHash string, err error) { return }
 
 //token

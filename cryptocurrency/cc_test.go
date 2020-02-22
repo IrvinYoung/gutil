@@ -19,6 +19,7 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	t.Logf("%s check=%v\n", a, cc.IsValidAccount(a))
 
 	host := "http://127.0.0.1:7545"
+	contractAddress := "0x6aa0cfdEFFefDd4968Cf550f9160D78AF9afd65F"
 	//init client
 	cc, err = InitEthereumClient(host)
 	cc.(*Ethereum).Close()
@@ -34,7 +35,7 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 		cc.Name(), cc.Symbol(), cc.Decimal(), cc.TotalSupply().String())
 
 	//token
-	token, err := e.TokenInstance("0x6aa0cfdEFFefDd4968Cf550f9160D78AF9afd65F")
+	token, err := e.TokenInstance(contractAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,5 +76,18 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 
 	//get transactions
 	txs, err := cc.TransactionsInBlocks(blk-3, blk)
-	t.Logf("eth - txs: %+v %v\n", txs, err)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, v := range txs {
+		t.Logf("eth-txs: %+v\n", v)
+	}
+	//get token transaction
+	txs, err = token.TransactionsInBlocks(blk-3, blk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, v := range txs {
+		t.Logf("token-txs: %+v\n", v)
+	}
 }
