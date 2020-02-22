@@ -24,7 +24,7 @@ type EthToken struct {
 	token *ERC20.ERC20
 }
 
-func InitEthereumTokenClient(host,addr string) (et *EthToken, err error) {
+func InitEthereumTokenClient(host, addr string) (et *EthToken, err error) {
 	nec, err := InitEthereumClient(host)
 	if err != nil {
 		return
@@ -54,7 +54,7 @@ func (et *EthToken) TotalSupply() (total decimal.Decimal) {
 		log.Println("get token name failed,", err)
 		return
 	}
-	et.totalSupply = ToDecimal(amount, et.Decimal())
+	et.totalSupply, _ = ToDecimal(amount, et.Decimal())
 	total = et.totalSupply
 	return
 }
@@ -100,7 +100,7 @@ func (et *EthToken) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, er
 	if err != nil {
 		return
 	}
-	b = ToDecimal(amount, et.Decimal())
+	b, err = ToDecimal(amount, et.Decimal())
 	return
 }
 

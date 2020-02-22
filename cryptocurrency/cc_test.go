@@ -18,10 +18,11 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	//account check
 	t.Logf("%s check=%v\n", a, cc.IsValidAccount(a))
 
+	host := "http://127.0.0.1:7545"
 	//init client
-	cc, err = InitEthereumClient("http://127.0.0.1:7545")
+	cc, err = InitEthereumClient(host)
 	cc.(*Ethereum).Close()
-	e := &Ethereum{Host: "http://127.0.0.1:7545"}
+	e := &Ethereum{Host: host}
 	if err = e.Init(); err != nil {
 		t.Fatal("init ethereum failed,", err)
 	}
@@ -38,9 +39,9 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer token.(*EthToken).Close()
-	a,p,err = token.AllocAccount("passwordpassword", "salt")
+	a, p, err = token.AllocAccount("passwordpassword", "salt")
 	t.Logf("account: addr=%s priv=%s err=%v\n", a, p, err)
-	t.Logf("%s is valid %v\n",a,token.IsValidAccount(a))
+	t.Logf("%s is valid %v\n", a, token.IsValidAccount(a))
 
 	//token info
 	t.Logf("token name=%s symbol=%s decimal=%d total_supply=%s\n",
@@ -61,14 +62,18 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	t.Logf("last token blk=%d %v\n", blk, err)
 
 	//get block by number
-	block,err := cc.BlockByNumber(blk)
-	t.Logf("eth - blk content number: %+v %v\n",block,err)
-	block,err = token.BlockByNumber(blk)
-	t.Logf("token - blk content number: %+v %v\n",block,err)
+	block, err := cc.BlockByNumber(blk)
+	t.Logf("eth - blk content number: %+v %v\n", block, err)
+	block, err = token.BlockByNumber(blk)
+	t.Logf("token - blk content number: %+v %v\n", block, err)
 
 	//get block by hash
-	block,err = cc.BlockByHash("0x650867ef48d96a1251d4950a1375fc810e50d7023dc8a7f003e3f4ab285d9958")
-	t.Logf("eth - blk content by hash: %+v %v\n",block,err)
-	block,err = token.BlockByHash("0x650867ef48d96a1251d4950a1375fc810e50d7023dc8a7f003e3f4ab285d9958")
-	t.Logf("token - blk content by hash: %+v %v\n",block,err)
+	block, err = cc.BlockByHash("0x650867ef48d96a1251d4950a1375fc810e50d7023dc8a7f003e3f4ab285d9958")
+	t.Logf("eth - blk content by hash: %+v %v\n", block, err)
+	block, err = token.BlockByHash("0x650867ef48d96a1251d4950a1375fc810e50d7023dc8a7f003e3f4ab285d9958")
+	t.Logf("token - blk content by hash: %+v %v\n", block, err)
+
+	//get transactions
+	txs, err := cc.TransactionsInBlocks(blk-3, blk)
+	t.Logf("eth - txs: %+v %v\n", txs, err)
 }

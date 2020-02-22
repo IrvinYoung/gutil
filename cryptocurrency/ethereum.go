@@ -11,8 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/shopspring/decimal"
+	"log"
 	"math/big"
 	"regexp"
+	"strings"
 )
 
 type Ethereum struct {
@@ -97,7 +99,7 @@ func (e *Ethereum) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, err
 	if err != nil {
 		return
 	}
-	b = ToDecimal(amount, e.Decimal())
+	b, err = ToDecimal(amount, e.Decimal())
 	return
 }
 
@@ -138,8 +140,22 @@ func (e *Ethereum) BlockByHash(blkHash string) (bi interface{}, err error) {
 }
 
 //transaction
-func (e *Ethereum) TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error) { return }
-func (e *Ethereum) Transfer(from, to map[string]decimal.Decimal) (txHash string, err error)    { return }
+func (e *Ethereum) TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error) {
+	b, err := e.c.BlockByNumber(e.ctx, big.NewInt(int64(from)))
+	if err != nil {
+		return
+	}
+	if err != nil {
+		return
+	}
+	for k, v := range b.Transactions() {
+		to := v.To().Hex()
+		amount, _ := ToDecimal(v.Value(), e.Decimal())
+		log.Printf("%d\t%s -> %s %s %s\n", k, "", to, v.Hash().Hex(), amount.String())
+	}
+	return
+}
+func (e *Ethereum) Transfer(from, to map[string]decimal.Decimal) (txHash string, err error) { return }
 
 //token
 func (e *Ethereum) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error) {
@@ -172,21 +188,23 @@ func (e *Ethereum) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err 
 //others
 func (e *Ethereum) EstimateFee(map[string]interface{}) (fee decimal.Decimal, err error) { return }
 
-func ToDecimal(ivalue interface{}, decimals int64) decimal.Decimal {
-	value := new(big.Int)
+func ToDecimal(ivalue interface{}, decimals int64) (d decimal.Decimal, err error) {
+	var value string
 	switch v := ivalue.(type) {
 	case string:
-		value.SetString(v, 10)
-	case *big.Int:
 		value = v
+	case *big.Int:
+		value = v.String()
 	}
-	mul := decimal.NewFromFloat(float64(10)).Pow(decimal.NewFromFloat(float64(decimals)))
-	num, _ := decimal.NewFromString(value.String())
-	result := num.Div(mul)
-	return result
+	if value, err = shiftDot(value, int(0-decimals)); err != nil {
+		return
+	}
+	d, err = decimal.NewFromString(value)
+	return
 }
 
 func ToWei(iamount interface{}, decimals int64) *big.Int {
+	panic("need implement")
 	amount := decimal.NewFromFloat(0)
 	switch v := iamount.(type) {
 	case string:
@@ -205,4 +223,35 @@ func ToWei(iamount interface{}, decimals int64) *big.Int {
 	wei := new(big.Int)
 	wei.SetString(result.String(), 10)
 	return wei
+}
+
+func shiftDot(f string, decimals int) (t string, err error) {
+	lr := strings.Split(f, ".")
+	if len(lr) > 2 || len(lr) < 1 {
+		err = errors.New("transform value failed,invalid number:" + f)
+		return
+	}
+	if decimals == 0 {
+		t = f
+		return
+	}
+	l, r := lr[0], ""
+	if len(lr) == 2 {
+		r = lr[1]
+	}
+	if decimals < 0 {
+		decimals = 0 - decimals
+		if decimals >= len(l) {
+			t = "0." + strings.Repeat("0", decimals-len(l)) + l + r
+		} else {
+			t = l[:len(l)-decimals] + "." + l[len(l)-decimals:] + r
+		}
+	} else {
+		if decimals >= len(r) {
+			t = l + r + strings.Repeat("0", decimals-len(r))
+		} else {
+			t = l + r[:decimals] + "." + r[decimals:]
+		}
+	}
+	return
 }
