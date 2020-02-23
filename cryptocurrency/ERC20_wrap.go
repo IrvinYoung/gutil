@@ -149,7 +149,7 @@ func (et *EthToken) TransactionsInBlocks(from, to uint64) (txs []*TransactionRec
 	return
 }
 
-func (et *EthToken) Transfer(from, to map[string]decimal.Decimal) (txHash string, err error) { return }
+func (et *EthToken) Transfer(from, to map[string]decimal.Decimal) (txSigned interface{}, err error) { return }
 
 //token
 func (et *EthToken) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error) {

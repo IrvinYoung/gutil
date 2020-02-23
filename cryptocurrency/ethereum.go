@@ -206,7 +206,7 @@ func (e *Ethereum) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error) {
 	return
 }
 
-func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo) (txHash string, err error) {
+func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo) (txSigned interface{}, err error) {
 	if len(from) != 1 || len(to) != 1 {
 		err = errors.New("params error")
 		return
@@ -221,10 +221,6 @@ func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo) (txHash string, e
 		return
 	}
 	addrTo := common.HexToAddress(to[0].To)
-	//if !from[0].Value.Equal(to[0].Value) {
-	//	err = errors.New("amount FROM is not equal TO")
-	//	return
-	//}
 	amount, err := ToWei(to[0].Value, e.Decimal())
 	if err != nil {
 		return
@@ -234,23 +230,35 @@ func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo) (txHash string, e
 	if err != nil {
 		return
 	}
-	log.Println("nonce=", nonce)
 	//2. gas price
 	gasPrice, err := e.c.SuggestGasPrice(e.ctx)
 	if err != nil {
 		return
 	}
-	log.Println("gasPrice=", gasPrice)
 	//3. gas limit	//compute again, not use default value: 21000
 	msg := ethereum.CallMsg{From: addrFrom, To: &addrTo, GasPrice: gasPrice, Value: amount, Data: nil}
 	gasLimit, err := e.c.EstimateGas(e.ctx, msg)
 	if err != nil {
 		return
 	}
-	log.Println("gasLimit=", gasLimit)
-
-	//tx := types.NewTransaction(nonce, addrTo, amount, gasLimit, gasPrice, nil)
-
+	//4. check balance
+	cost := gasPrice.Mul(gasPrice, big.NewInt(int64(gasLimit)))
+	cost = cost.Add(cost, amount)
+	balance, err := e.c.BalanceAt(e.ctx, addrFrom, nil)
+	if err != nil {
+		return
+	}
+	if balance.Cmp(cost) < 0 {
+		err = errors.New("no more balance")
+		return
+	}
+	//5. make tx
+	tx := types.NewTransaction(nonce, addrTo, amount, gasLimit, gasPrice, nil)
+	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(e.chainID), priv)
+	if err != nil {
+		return
+	}
+	txSigned = signedTx
 	return
 }
 

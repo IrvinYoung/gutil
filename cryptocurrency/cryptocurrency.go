@@ -26,7 +26,7 @@ type CryptoCurrency interface {
 
 	//transaction
 	TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error)
-	MakeTransaction([]*TxFrom, []*TxTo) (txHash string, err error)
+	MakeTransaction([]*TxFrom, []*TxTo) (txSigned interface{}, err error)
 	SendTransaction()
 	EstimateFee(map[string]interface{}) (fee decimal.Decimal, err error)
 

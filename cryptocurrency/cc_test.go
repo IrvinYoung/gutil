@@ -1,6 +1,7 @@
 package cryptocurrency
 
 import (
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/shopspring/decimal"
 	"testing"
 )
@@ -109,5 +110,6 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("txid=%s\n", txHash)
+	t.Logf("txid=%s\n", txHash.(*types.Transaction).Hash().Hex())
+
 }
