@@ -1,6 +1,7 @@
 package cryptocurrency
 
 import (
+	"github.com/shopspring/decimal"
 	"testing"
 )
 
@@ -90,4 +91,23 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	for _, v := range txs {
 		t.Logf("token-txs: %+v\n", v)
 	}
+
+	//make raw transaction
+	from := []*TxFrom{
+		&TxFrom{
+			From:       "0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1",
+			PrivateKey: "c821b8cdfe1b7dd195ffb00d17245f945ab893253ee846d987e362658a92585c",
+		},
+	}
+	to := []*TxTo{
+		&TxTo{
+			To:    "0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2",
+			Value: decimal.New(50, 0),
+		},
+	}
+	txHash, err := cc.MakeTransaction(from, to)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("txid=%s\n", txHash)
 }

@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/ethereum/go-ethereum"
 	"log"
 	"math/big"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/IrvinYoung/gutil/cryptocurrency/ERC20"
@@ -204,9 +206,55 @@ func (e *Ethereum) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error) {
 	return
 }
 
-func (e *Ethereum) Transfer(from, to map[string]decimal.Decimal) (txHash string, err error) {
+func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo) (txHash string, err error) {
+	if len(from) != 1 || len(to) != 1 {
+		err = errors.New("params error")
+		return
+	}
+	addrFrom := common.HexToAddress(from[0].From)
+	priv, err := crypto.HexToECDSA(from[0].PrivateKey)
+	if err != nil {
+		return
+	}
+	if crypto.PubkeyToAddress(priv.PublicKey) != addrFrom {
+		err = errors.New("private key do not match address")
+		return
+	}
+	addrTo := common.HexToAddress(to[0].To)
+	//if !from[0].Value.Equal(to[0].Value) {
+	//	err = errors.New("amount FROM is not equal TO")
+	//	return
+	//}
+	amount, err := ToWei(to[0].Value, e.Decimal())
+	if err != nil {
+		return
+	}
+	//1. get nonce
+	nonce, err := e.c.PendingNonceAt(e.ctx, addrFrom)
+	if err != nil {
+		return
+	}
+	log.Println("nonce=", nonce)
+	//2. gas price
+	gasPrice, err := e.c.SuggestGasPrice(e.ctx)
+	if err != nil {
+		return
+	}
+	log.Println("gasPrice=", gasPrice)
+	//3. gas limit	//compute again, not use default value: 21000
+	msg := ethereum.CallMsg{From: addrFrom, To: &addrTo, GasPrice: gasPrice, Value: amount, Data: nil}
+	gasLimit, err := e.c.EstimateGas(e.ctx, msg)
+	if err != nil {
+		return
+	}
+	log.Println("gasLimit=", gasLimit)
+
+	//tx := types.NewTransaction(nonce, addrTo, amount, gasLimit, gasPrice, nil)
+
 	return
 }
+
+func (e *Ethereum) SendTransaction() {}
 
 //token
 func (e *Ethereum) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error) {
@@ -244,7 +292,7 @@ func ToDecimal(ivalue interface{}, decimals int64) (d decimal.Decimal, err error
 	switch v := ivalue.(type) {
 	case string:
 		value = v
-	case *big.Int:
+	case decimal.Decimal:
 		value = v.String()
 	}
 	if value, err = shiftDot(value, int(0-decimals)); err != nil {
@@ -254,26 +302,37 @@ func ToDecimal(ivalue interface{}, decimals int64) (d decimal.Decimal, err error
 	return
 }
 
-func ToWei(iamount interface{}, decimals int64) *big.Int {
-	panic("need implement")
-	amount := decimal.NewFromFloat(0)
+func ToWei(iamount interface{}, decimals int64) (amount *big.Int, err error) {
+	//todo: consider to use decimal.Decimal
+	var value string
 	switch v := iamount.(type) {
 	case string:
-		amount, _ = decimal.NewFromString(v)
+		value = iamount.(string)
 	case float64:
-		amount = decimal.NewFromFloat(v)
+		//value = strconv.FormatFloat(iamount.(float64), 'f', int(decimals), 64)	//todo: precision error
+		err = errors.New("not support float64")
+		return
 	case int64:
-		amount = decimal.NewFromFloat(float64(v))
+		value = strconv.FormatInt(iamount.(int64), 10)
+	case int:
+		value = strconv.Itoa(iamount.(int))
 	case decimal.Decimal:
-		amount = v
+		value = iamount.(decimal.Decimal).String()
 	case *decimal.Decimal:
-		amount = *v
+		value = (*v).String()
+	default:
+		err = errors.New("not support type")
+		return
 	}
-	mul := decimal.NewFromFloat(float64(10)).Pow(decimal.NewFromFloat(float64(decimals)))
-	result := amount.Mul(mul)
-	wei := new(big.Int)
-	wei.SetString(result.String(), 10)
-	return wei
+	if value, err = shiftDot(value, int(decimals)); err != nil {
+		return
+	}
+	d, err := decimal.NewFromString(value)
+	if err != nil {
+		return
+	}
+	amount = d.Coefficient()
+	return
 }
 
 func shiftDot(f string, decimals int) (t string, err error) {
@@ -300,6 +359,7 @@ func shiftDot(f string, decimals int) (t string, err error) {
 	} else {
 		if decimals >= len(r) {
 			t = l + r + strings.Repeat("0", decimals-len(r))
+			t = strings.TrimLeft(t, "0")
 		} else {
 			t = l + r[:decimals] + "." + r[decimals:]
 		}

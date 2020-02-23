@@ -26,13 +26,24 @@ type CryptoCurrency interface {
 
 	//transaction
 	TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error)
-	Transfer(from, to map[string]decimal.Decimal) (txHash string, err error)
+	MakeTransaction([]*TxFrom, []*TxTo) (txHash string, err error)
+	SendTransaction()
+	EstimateFee(map[string]interface{}) (fee decimal.Decimal, err error)
 
 	//token
 	TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error)
 	IsToken() bool
-	//others
-	EstimateFee(map[string]interface{}) (fee decimal.Decimal, err error)
+}
+
+type TxFrom struct {
+	From       string
+	PrivateKey string
+	Index      uint64	//for UTXO
+}
+
+type TxTo struct {
+	To    string
+	Value decimal.Decimal
 }
 
 type TransactionRecord struct {
