@@ -159,8 +159,8 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 		PrivateKey: "c821b8cdfe1b7dd195ffb00d17245f945ab893253ee846d987e362658a92585c",
 	}
 	agent := &TxTo{
-		To:    "0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2",
-		Value: decimal.New(50, 1),
+		To:    "0xa5B93c3694b1c9CcFeACcaEebB0E6EA9F13930cC",
+		Value: decimal.New(5, 3),
 	}
 	tx, err = token.ApproveAgent(owner, agent)
 	remain, _ := token.Allowance(owner.From, agent.To)
@@ -170,6 +170,35 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("new token approve tx=", txHash)
+	remain, _ = token.Allowance(owner.From, agent.To)
+	t.Logf("after approve=%s\n", remain.String())
+
+	//token transfer from
+	from = []*TxFrom{
+		&TxFrom{
+			From:       "0xa5B93c3694b1c9CcFeACcaEebB0E6EA9F13930cC",
+			PrivateKey: "71d86e526f9ed61088df3c6080821ba3476d5ca2008dff05c2176940b5505cb6",
+		},
+	}
+	to = []*TxTo{
+		&TxTo{
+			To:    "0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2",
+			Value: decimal.New(1, 3),
+		},
+	}
+	tx, err = token.MakeAgentTransaction("0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", from, to)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tokenBalance, _ = token.BalanceOf("0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2", 0)
+	t.Logf("before token balance=%s\n", tokenBalance.String())
+	txHash, err = token.SendTransaction(tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tokenBalance, _ = token.BalanceOf("0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2", 0)
+	t.Log("new token approve tx=", txHash)
+	t.Logf("after token balance=%s\n", tokenBalance.String())
 	remain, _ = token.Allowance(owner.From, agent.To)
 	t.Logf("after approve=%s\n", remain.String())
 }

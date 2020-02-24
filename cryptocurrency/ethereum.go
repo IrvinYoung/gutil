@@ -283,7 +283,7 @@ func (e *Ethereum) SendTransaction(tx interface{}) (txHash string, err error) {
 	return
 }
 
-func (e *Ethereum) MakeAgentTransaction(agent string, from []*TxFrom, to []*TxTo) (txSigned interface{}, err error) {
+func (e *Ethereum) MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo) (txSigned interface{}, err error) {
 	err = errors.New("not support")
 	return
 }

@@ -29,7 +29,7 @@ type CryptoCurrency interface {
 	TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error)
 	MakeTransaction([]*TxFrom, []*TxTo) (txSigned interface{}, err error)
 	SendTransaction(txSigned interface{}) (txHash string, err error)
-	MakeAgentTransaction(agent string, from []*TxFrom, to []*TxTo) (txSigned interface{}, err error)
+	MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo) (txSigned interface{}, err error)
 	ApproveAgent(*TxFrom, *TxTo) (txSigned interface{},err error)
 	Allowance(owner, agent string) (remain decimal.Decimal, err error)
 

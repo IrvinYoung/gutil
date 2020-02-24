@@ -241,11 +241,85 @@ func (et *EthToken) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err
 
 func (et *EthToken) IsToken() bool { return true }
 
-func (et *EthToken) MakeAgentTransaction(agent string, from []*TxFrom, to []*TxTo) (txSigned interface{}, err error) {
-	if !et.IsValidAccount(agent) {
+func (et *EthToken) MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo) (txSigned interface{}, err error) {
+	if !et.IsValidAccount(from) {
 		err = errors.New("address is invalid")
 		return
 	}
+	if len(agent) != 1 || len(to) != 1 {
+		err = errors.New("params error")
+		return
+	}
+	if !et.IsValidAccount(agent[0].From) || !et.IsValidAccount(to[0].To) {
+		err = errors.New("address is invalid")
+		return
+	}
+	addrFrom := common.HexToAddress(from)
+	addrAgent := common.HexToAddress(agent[0].From)
+	priv, err := crypto.HexToECDSA(agent[0].PrivateKey)
+	if err != nil {
+		return
+	}
+	if crypto.PubkeyToAddress(priv.PublicKey) != addrAgent {
+		err = errors.New("private key do not match address")
+		return
+	}
+	addrTo := common.HexToAddress(to[0].To)
+	amount, err := ToWei(to[0].Value, et.Decimal())
+	if err != nil {
+		return
+	}
+	//1. get nonce
+	nonce, err := et.c.PendingNonceAt(et.ctx, addrAgent)
+	if err != nil {
+		return
+	}
+	//2. gas price
+	gasPrice, err := et.c.SuggestGasPrice(et.ctx)
+	if err != nil {
+		return
+	}
+	//3. gas limit
+	parsed, err := abi.JSON(strings.NewReader(ERC20.ERC20ABI))
+	if err != nil {
+		return
+	}
+	data, err := parsed.Pack("transferFrom", addrFrom, addrTo, amount)
+	if err != nil {
+		return
+	}
+	addrToken := common.HexToAddress(et.Contract)
+	msg := ethereum.CallMsg{From: addrAgent, To: &addrToken, GasPrice: gasPrice, Value: nil, Data: data}
+	gasLimit, err := et.c.EstimateGas(et.ctx, msg)
+	if err != nil {
+		return
+	}
+	//4. check eth balance
+	fee := new(big.Int).Mul(gasPrice, big.NewInt(int64(gasLimit)))
+	ethBalance, err := et.c.BalanceAt(et.ctx, addrAgent, nil)
+	if err != nil {
+		return
+	}
+	if ethBalance.Cmp(fee) < 0 {
+		err = errors.New("no more fee")
+		return
+	}
+	//5. check token balance
+	balance, err := et.token.BalanceOf(&bind.CallOpts{}, addrFrom)
+	if err != nil {
+		return
+	}
+	if balance.Cmp(amount) < 0 {
+		err = errors.New("no more balance")
+		return
+	}
+	//6. make tx
+	tx := types.NewTransaction(nonce, addrToken, nil, gasLimit, gasPrice, data)
+	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(et.chainID), priv)
+	if err != nil {
+		return
+	}
+	txSigned = signedTx
 	return
 }
 
