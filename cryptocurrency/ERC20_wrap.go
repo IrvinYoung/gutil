@@ -103,6 +103,10 @@ func (et *EthToken) Decimal() int64 {
 }
 
 func (et *EthToken) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, err error) {
+	if !et.IsValidAccount(addr) {
+		err = errors.New("address is invalid")
+		return
+	}
 	amount, err := et.token.BalanceOf(&bind.CallOpts{}, common.HexToAddress(addr))
 	if err != nil {
 		return
