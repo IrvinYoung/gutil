@@ -34,7 +34,7 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 
 	//eth info
 	t.Logf("name=%s symbol=%s decimal=%d total_supply=%s\n",
-		cc.Name(), cc.Symbol(), cc.Decimal(), cc.TotalSupply().String())
+		cc.CoinName(), cc.Symbol(), cc.Decimal(), cc.TotalSupply().String())
 
 	//token
 	token, err := e.TokenInstance(contractAddress)
@@ -48,7 +48,7 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 
 	//token info
 	t.Logf("token name=%s symbol=%s decimal=%d total_supply=%s\n",
-		token.Name(), token.Symbol(), token.Decimal(), token.TotalSupply().String())
+		token.CoinName(), token.Symbol(), token.Decimal(), token.TotalSupply().String())
 
 	//balance
 	b, err := cc.BalanceOf("0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", 0)
@@ -93,7 +93,7 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 		t.Logf("token-txs: %+v\n", v)
 	}
 
-	//make raw transaction
+	//make eth raw transaction
 	from := []*TxFrom{
 		&TxFrom{
 			From:       "0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1",
@@ -103,13 +103,69 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	to := []*TxTo{
 		&TxTo{
 			To:    "0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2",
-			Value: decimal.New(50, 0),
+			Value: decimal.New(1, 0),
 		},
 	}
-	txHash, err := cc.MakeTransaction(from, to)
+	tx, err := cc.MakeTransaction(from, to)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("txid=%s\n", txHash.(*types.Transaction).Hash().Hex())
+	t.Logf("txid=%s\n", tx.(*types.Transaction).Hash().Hex())
 
+	//send eth raw transaction
+	txHash, err := cc.SendTransaction(tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("new eth tx=", txHash)
+
+	//make token raw transaction
+	tokenBalance, _ := token.BalanceOf("0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", 0)
+	t.Logf("before: from - token balance %s %s\n", "0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", tokenBalance)
+	tokenBalance, _ = token.BalanceOf("0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2", 0)
+	t.Logf("before: to - token balance %s %s\n", "0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2", tokenBalance)
+	from = []*TxFrom{
+		&TxFrom{
+			From:       "0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1",
+			PrivateKey: "c821b8cdfe1b7dd195ffb00d17245f945ab893253ee846d987e362658a92585c",
+		},
+	}
+	to = []*TxTo{
+		&TxTo{
+			To:    "0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2",
+			Value: decimal.New(1, -3),
+		},
+	}
+	tx, err = token.MakeTransaction(from, to)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("token txid=%s\n", tx.(*types.Transaction).Hash().Hex())
+
+	//send token raw transaction
+	txHash, err = token.SendTransaction(tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("new token tx=", txHash)
+	tokenBalance, _ = token.BalanceOf("0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", 0)
+	t.Logf("after: from - token balance %s %s\n", "0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", tokenBalance)
+	tokenBalance, _ = token.BalanceOf("0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2", 0)
+	t.Logf("after: to - token balance %s %s\n", "0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2", tokenBalance)
+
+	//token approve
+	owner := &TxFrom{
+		From:       "0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1",
+		PrivateKey: "c821b8cdfe1b7dd195ffb00d17245f945ab893253ee846d987e362658a92585c",
+	}
+	agent := &TxTo{
+		To:    "0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2",
+		Value: decimal.New(50, 0),
+	}
+	tx, err = token.ApproveAgent(owner, agent)
+	txHash, err = token.SendTransaction(tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("new token approve tx=", txHash)
 }

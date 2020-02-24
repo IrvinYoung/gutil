@@ -62,8 +62,12 @@ func (e *Ethereum) TotalSupply() decimal.Decimal {
 }
 
 //basic
-func (e *Ethereum) Name() string {
+func (e *Ethereum) CoinName() string {
 	return "Ethereum"
+}
+
+func (e *Ethereum) ChainName() string {
+	return ChainETH
 }
 
 func (e *Ethereum) Symbol() string {
@@ -96,6 +100,10 @@ func (e *Ethereum) IsValidAccount(addr string) bool {
 }
 
 func (e *Ethereum) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, err error) {
+	if !e.IsValidAccount(addr) {
+		err = errors.New("address is invalid")
+		return
+	}
 	var blk *big.Int
 	if blkNum == 0 {
 		blk = nil
@@ -211,6 +219,10 @@ func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo) (txSigned interfa
 		err = errors.New("params error")
 		return
 	}
+	if !e.IsValidAccount(from[0].From) || !e.IsValidAccount(to[0].To) {
+		err = errors.New("address is invalid")
+		return
+	}
 	addrFrom := common.HexToAddress(from[0].From)
 	priv, err := crypto.HexToECDSA(from[0].PrivateKey)
 	if err != nil {
@@ -242,8 +254,8 @@ func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo) (txSigned interfa
 		return
 	}
 	//4. check balance
-	cost := gasPrice.Mul(gasPrice, big.NewInt(int64(gasLimit)))
-	cost = cost.Add(cost, amount)
+	cost := new(big.Int).Mul(gasPrice, big.NewInt(int64(gasLimit)))
+	cost = new(big.Int).Add(cost, amount)
 	balance, err := e.c.BalanceAt(e.ctx, addrFrom, nil)
 	if err != nil {
 		return
@@ -262,7 +274,29 @@ func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo) (txSigned interfa
 	return
 }
 
-func (e *Ethereum) SendTransaction() {}
+func (e *Ethereum) SendTransaction(tx interface{}) (txHash string, err error) {
+	signedTx := tx.(*types.Transaction)
+	if err = e.c.SendTransaction(e.ctx, signedTx); err != nil {
+		return
+	}
+	txHash = signedTx.Hash().Hex()
+	return
+}
+
+func (e *Ethereum) MakeAgentTransaction(agent string, from []*TxFrom, to []*TxTo) (txSigned interface{}, err error) {
+	err = errors.New("not support")
+	return
+}
+
+func (e *Ethereum) ApproveAgent(owner *TxFrom, agent *TxTo) (txSigned interface{}, err error) {
+	err = errors.New("not support")
+	return
+}
+
+func (e *Ethereum) Allowance(owner, agent string) (remain decimal.Decimal, err error) {
+	err = errors.New("not support")
+	return
+}
 
 //token
 func (e *Ethereum) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error) {
@@ -292,9 +326,6 @@ func (e *Ethereum) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err 
 	return
 }
 
-//others
-func (e *Ethereum) EstimateFee(map[string]interface{}) (fee decimal.Decimal, err error) { return }
-
 func ToDecimal(ivalue interface{}, decimals int64) (d decimal.Decimal, err error) {
 	var value string
 	switch v := ivalue.(type) {
@@ -302,6 +333,11 @@ func ToDecimal(ivalue interface{}, decimals int64) (d decimal.Decimal, err error
 		value = v
 	case decimal.Decimal:
 		value = v.String()
+	case *big.Int:
+		value = v.String()
+	default:
+		err = errors.New("not support type")
+		return
 	}
 	if value, err = shiftDot(value, int(0-decimals)); err != nil {
 		return

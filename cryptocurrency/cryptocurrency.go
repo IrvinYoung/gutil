@@ -9,7 +9,8 @@ import (
 
 type CryptoCurrency interface {
 	//basic
-	Name() string
+	ChainName() string
+	CoinName() string
 	Symbol() string
 	Decimal() int64
 	TotalSupply() decimal.Decimal
@@ -27,8 +28,10 @@ type CryptoCurrency interface {
 	//transaction
 	TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error)
 	MakeTransaction([]*TxFrom, []*TxTo) (txSigned interface{}, err error)
-	SendTransaction()
-	EstimateFee(map[string]interface{}) (fee decimal.Decimal, err error)
+	SendTransaction(txSigned interface{}) (txHash string, err error)
+	MakeAgentTransaction(agent string, from []*TxFrom, to []*TxTo) (txSigned interface{}, err error)
+	ApproveAgent(*TxFrom, *TxTo) (txSigned interface{},err error)
+	Allowance(owner, agent string) (remain decimal.Decimal, err error)
 
 	//token
 	TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error)
@@ -38,7 +41,7 @@ type CryptoCurrency interface {
 type TxFrom struct {
 	From       string
 	PrivateKey string
-	Index      uint64	//for UTXO
+	Index      uint64 //for UTXO
 }
 
 type TxTo struct {
@@ -59,6 +62,11 @@ type TransactionRecord struct {
 	TimeStamp   int64           `json:"time_stamp"`
 	Data        interface{}     `json:"-"` //bitcoin:OP_RETURN  ERC20:input data
 }
+
+const (
+	ChainBTC = "bitcoin"
+	ChainETH = "ethereum"
+)
 
 func PasswordCheck(pwd, salt string) (err error) {
 	if len(pwd) != 16 {

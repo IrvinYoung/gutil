@@ -2,7 +2,13 @@ package cryptocurrency
 
 import (
 	"errors"
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"log"
+	"math/big"
+	"strings"
 
 	"github.com/IrvinYoung/gutil/cryptocurrency/ERC20"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -61,7 +67,7 @@ func (et *EthToken) TotalSupply() (total decimal.Decimal) {
 }
 
 //basic
-func (et *EthToken) Name() string {
+func (et *EthToken) CoinName() string {
 	if et.name != "" {
 		return et.name
 	}
@@ -149,7 +155,83 @@ func (et *EthToken) TransactionsInBlocks(from, to uint64) (txs []*TransactionRec
 	return
 }
 
-func (et *EthToken) Transfer(from, to map[string]decimal.Decimal) (txSigned interface{}, err error) { return }
+func (et *EthToken) MakeTransaction(from []*TxFrom, to []*TxTo) (txSigned interface{}, err error) {
+	//make raw transaction, don't run token transfer
+	if len(from) != 1 || len(to) != 1 {
+		err = errors.New("params error")
+		return
+	}
+	if !et.IsValidAccount(from[0].From) || !et.IsValidAccount(to[0].To) {
+		err = errors.New("address is invalid")
+		return
+	}
+	addrFrom := common.HexToAddress(from[0].From)
+	priv, err := crypto.HexToECDSA(from[0].PrivateKey)
+	if err != nil {
+		return
+	}
+	if crypto.PubkeyToAddress(priv.PublicKey) != addrFrom {
+		err = errors.New("private key do not match address")
+		return
+	}
+	addrTo := common.HexToAddress(to[0].To)
+	amount, err := ToWei(to[0].Value, et.Decimal())
+	if err != nil {
+		return
+	}
+	//1. get nonce
+	nonce, err := et.c.PendingNonceAt(et.ctx, addrFrom)
+	if err != nil {
+		return
+	}
+	//2. gas price
+	gasPrice, err := et.c.SuggestGasPrice(et.ctx)
+	if err != nil {
+		return
+	}
+	//3. gas limit
+	parsed, err := abi.JSON(strings.NewReader(ERC20.ERC20ABI))
+	if err != nil {
+		return
+	}
+	data, err := parsed.Pack("transfer", addrTo, amount)
+	if err != nil {
+		return
+	}
+	addrToken := common.HexToAddress(et.Contract)
+	msg := ethereum.CallMsg{From: addrFrom, To: &addrToken, GasPrice: gasPrice, Value: nil, Data: data}
+	gasLimit, err := et.c.EstimateGas(et.ctx, msg)
+	if err != nil {
+		return
+	}
+	//4. check eth balance
+	fee := new(big.Int).Mul(gasPrice, big.NewInt(int64(gasLimit)))
+	ethBalance, err := et.c.BalanceAt(et.ctx, addrFrom, nil)
+	if err != nil {
+		return
+	}
+	if ethBalance.Cmp(fee) < 0 {
+		err = errors.New("no more fee")
+		return
+	}
+	//5. check token balance
+	balance, err := et.token.BalanceOf(&bind.CallOpts{}, addrFrom)
+	if err != nil {
+		return
+	}
+	if balance.Cmp(amount) < 0 {
+		err = errors.New("no more balance")
+		return
+	}
+	//6. make tx
+	tx := types.NewTransaction(nonce, addrToken, nil, gasLimit, gasPrice, data)
+	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(et.chainID), priv)
+	if err != nil {
+		return
+	}
+	txSigned = signedTx
+	return
+}
 
 //token
 func (et *EthToken) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error) {
@@ -159,5 +241,86 @@ func (et *EthToken) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err
 
 func (et *EthToken) IsToken() bool { return true }
 
-//others
-func (et *EthToken) EstimateFee(map[string]interface{}) (fee decimal.Decimal, err error) { return }
+func (et *EthToken) MakeAgentTransaction(agent string, from []*TxFrom, to []*TxTo) (txSigned interface{}, err error) {
+	if !et.IsValidAccount(agent) {
+		err = errors.New("address is invalid")
+		return
+	}
+	return
+}
+
+func (et *EthToken) ApproveAgent(owner *TxFrom, agent *TxTo) (txSigned interface{}, err error) {
+	if owner == nil || agent == nil {
+		err = errors.New("params error")
+		return
+	}
+	if !et.IsValidAccount(owner.From) || !et.IsValidAccount(agent.To) {
+		err = errors.New("address is invalid")
+		return
+	}
+	addrOwner := common.HexToAddress(owner.From)
+	priv, err := crypto.HexToECDSA(owner.PrivateKey)
+	if err != nil {
+		return
+	}
+	if crypto.PubkeyToAddress(priv.PublicKey) != addrOwner {
+		err = errors.New("private key do not match address")
+		return
+	}
+	addrAgent := common.HexToAddress(agent.To)
+	amount, err := ToWei(agent.Value, et.Decimal())
+	if err != nil {
+		return
+	}
+	//1. get nonce
+	nonce, err := et.c.PendingNonceAt(et.ctx, addrOwner)
+	if err != nil {
+		return
+	}
+	//2. gas price
+	gasPrice, err := et.c.SuggestGasPrice(et.ctx)
+	if err != nil {
+		return
+	}
+	//3. gas limit
+	parsed, err := abi.JSON(strings.NewReader(ERC20.ERC20ABI))
+	if err != nil {
+		return
+	}
+	data, err := parsed.Pack("approve", addrAgent, amount)
+	if err != nil {
+		return
+	}
+	addrToken := common.HexToAddress(et.Contract)
+	msg := ethereum.CallMsg{From: addrOwner, To: &addrToken, GasPrice: gasPrice, Value: nil, Data: data}
+	gasLimit, err := et.c.EstimateGas(et.ctx, msg)
+	if err != nil {
+		return
+	}
+	//4. check eth balance
+	fee := new(big.Int).Mul(gasPrice, big.NewInt(int64(gasLimit)))
+	ethBalance, err := et.c.BalanceAt(et.ctx, addrOwner, nil)
+	if err != nil {
+		return
+	}
+	if ethBalance.Cmp(fee) < 0 {
+		err = errors.New("no more fee")
+		return
+	}
+	//5. make tx
+	tx := types.NewTransaction(nonce, addrToken, nil, gasLimit, gasPrice, data)
+	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(et.chainID), priv)
+	if err != nil {
+		return
+	}
+	txSigned = signedTx
+	return
+}
+
+func (et *EthToken) Allowance(owner, agent string) (remain decimal.Decimal, err error) {
+	if !et.IsValidAccount(owner) || !et.IsValidAccount(agent) {
+		err = errors.New("address is invalid")
+		return
+	}
+	return
+}
