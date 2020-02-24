@@ -322,5 +322,11 @@ func (et *EthToken) Allowance(owner, agent string) (remain decimal.Decimal, err 
 		err = errors.New("address is invalid")
 		return
 	}
+	a, err := et.token.Allowance(&bind.CallOpts{}, common.HexToAddress(owner), common.HexToAddress(agent))
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	remain, err = ToDecimal(a, et.Decimal())
 	return
 }

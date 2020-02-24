@@ -160,12 +160,16 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	}
 	agent := &TxTo{
 		To:    "0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2",
-		Value: decimal.New(50, 0),
+		Value: decimal.New(50, 1),
 	}
 	tx, err = token.ApproveAgent(owner, agent)
+	remain, _ := token.Allowance(owner.From, agent.To)
+	t.Logf("before approve=%s\n", remain.String())
 	txHash, err = token.SendTransaction(tx)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("new token approve tx=", txHash)
+	remain, _ = token.Allowance(owner.From, agent.To)
+	t.Logf("after approve=%s\n", remain.String())
 }
