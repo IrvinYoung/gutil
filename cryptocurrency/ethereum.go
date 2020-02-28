@@ -79,7 +79,7 @@ func (e *Ethereum) Decimal() int64 {
 }
 
 //account
-func (e *Ethereum) AllocAccount(password, salt string) (addr, priv string, err error) {
+func (e *Ethereum) AllocAccount(password, salt string,params map[string]interface{}) (addr, priv string, err error) {
 	privateKeyECDSA, err := crypto.GenerateKey()
 	if err != nil {
 		return

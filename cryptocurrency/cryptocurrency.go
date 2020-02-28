@@ -16,7 +16,7 @@ type CryptoCurrency interface {
 	TotalSupply() decimal.Decimal
 
 	//account
-	AllocAccount(password, salt string) (addr, priv string, err error)
+	AllocAccount(password, salt string,params map[string]interface{}) (addr, priv string, err error)
 	IsValidAccount(addr string) bool
 	BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, err error)
 

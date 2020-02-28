@@ -11,7 +11,7 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	cc = &Ethereum{}
 
 	//get account
-	a, p, err := cc.AllocAccount("passwordpassword", "salt")
+	a, p, err := cc.AllocAccount("passwordpassword", "salt",nil)
 	t.Logf("account: addr=%s priv=%s err=%v\n", a, p, err)
 	//decrypt private key
 	priv, err := DecryptPrivKey("passwordpassword", "salt", p)
@@ -42,7 +42,7 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer token.(*EthToken).Close()
-	a, p, err = token.AllocAccount("passwordpassword", "salt")
+	a, p, err = token.AllocAccount("passwordpassword", "salt", nil)
 	t.Logf("account: addr=%s priv=%s err=%v\n", a, p, err)
 	t.Logf("%s is valid %v\n", a, token.IsValidAccount(a))
 
