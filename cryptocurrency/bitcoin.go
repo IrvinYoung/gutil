@@ -196,7 +196,16 @@ func (b *Bitcoin) BlockByNumber(blkNum uint64) (bi interface{}, err error) {
 	bi = bbi
 	return
 }
-func (b *Bitcoin) BlockByHash(blkHash string) (bi interface{}, err error) { return }
+
+func (b *Bitcoin) BlockByHash(blkHash string) (bi interface{}, err error) {
+	// https://chain.api.btc.com/v3/block/3
+	// https://chain.api.btc.com/v3/block/3,4,5,latest
+	var bbi BtcBlockInfo
+	if err = b.request(fmt.Sprintf("/block/%s", blkHash), &bbi); err != nil {
+		return
+	}
+	bi = bbi
+	return}
 
 //transaction
 func (b *Bitcoin) TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error) { return }
