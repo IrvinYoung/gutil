@@ -8,7 +8,7 @@ import (
 func TestCryptoCurrencyBitcoin(t *testing.T) {
 	var cc CryptoCurrency
 	cc = &Bitcoin{}
-	t.Log("name=",cc.CoinName())
+	t.Log("name=", cc.CoinName())
 
 	a, p, err := cc.AllocAccount("passwordpassword", "salt", map[string]interface{}{
 		"net":        &chaincfg.MainNetParams,
@@ -46,4 +46,22 @@ func TestCryptoCurrencyBitcoin(t *testing.T) {
 		"isCompress": true,
 	})
 	t.Logf("P2WSH\taddr=%s\tpriv=%s\terr=%v\n", a, p, err)
+
+	//check addr valid
+	addrs := [...]string{
+		"12sQsrgs3Ypo6MqbaYHRKs7ADh8oMphWhC",
+		"3D1GrdhTXCDG5vtAcwXt7vuM9nFLuzcEiH",
+		"bc1ql3eym3gl875t9hdgu9at9ce93h2rgcg6nnvt5e",
+		//wrong
+		"19WX95dxY3v92qqPLumvWedgnukh5UgSQB",
+		"3Joo2Hm2pxkMq1ztheeuHAUQLC311yjGxs",
+		"bc1q5r3zc0swmtstrcnkhld9mzynhemgtuja54e488",
+	}
+	for _, v := range addrs {
+		if cc.IsValidAccount(v){
+			t.Logf("valid\t%s",v)
+		}else{
+			t.Logf("invalid\t%s",v)
+		}
+	}
 }

@@ -96,7 +96,16 @@ func (b *Bitcoin) AllocAccount(password, salt string, params map[string]interfac
 	priv, err = encryptPrivKey(password, salt, privKey)
 	return
 }
-func (b *Bitcoin) IsValidAccount(addr string) bool                                     { return false }
+func (b *Bitcoin) IsValidAccount(addr string) bool {
+	if addr == "" {
+		return false
+	}
+	_, err := btcutil.DecodeAddress(addr, &chaincfg.MainNetParams)
+	if err != nil {
+		return false
+	}
+	return true
+}
 func (b *Bitcoin) BalanceOf(addr string, blkNum uint64) (d decimal.Decimal, err error) { return }
 
 //block
