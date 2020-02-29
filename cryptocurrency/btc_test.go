@@ -68,4 +68,8 @@ func TestCryptoCurrencyBitcoin(t *testing.T) {
 		}
 		t.Logf("balance\t%s %s\n", v, b.String())
 	}
+
+	//get block number
+	blkNum, err := cc.LastBlockNumber()
+	t.Logf("last block= %d %v\n", blkNum, err)
 }

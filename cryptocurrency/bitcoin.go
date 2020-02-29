@@ -9,6 +9,7 @@ import (
 	"github.com/btcsuite/btcutil"
 	"github.com/shopspring/decimal"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -25,7 +26,7 @@ type RespData struct {
 	ErrMsg string          `json:"err_msg"`
 }
 
-type AddrInfo struct {
+type BtcAddrInfo struct {
 	Address            string `json:"address"`              // address: string 地址
 	Received           int64  `json:"received"`             // received: int 总接收
 	Sent               int64  `json:"sent"`                 // sent: int 总支出
@@ -35,6 +36,28 @@ type AddrInfo struct {
 	Unconfirmed        int64  `json:"unconfirmed_received"` // unconfirmed_received: int 未确认总接收
 	UnconfirmedSent    int64  `json:"unconfirmed_sent"`     // unconfirmed_sent: int 未确认总支出
 	UnspentTxCount     int64  `json:"unspent_tx_count"`     // unspent_tx_count: int 未花费交易数量
+}
+
+type BtcBlockInfo struct {
+	Height           int64                  `json:"height"`             // height: int 块高度
+	Version          int64                  `json:"version"`            // version: int 块版本
+	MrklRoot         string                 `json:"mrkl_root"`          // mrkl_root: string Merkle Root
+	CurrMaxTimestamp int64                  `json:"curr_max_timestamp"` // curr_max_timestamp: int 块最大时间戳
+	TimeStamp        int64                  `json:"timestamp"`          // timestamp: int 块时间戳
+	Bits             int64                  `json:"bits"`               // bits: int bits
+	Nonce            int64                  `json:"nonce"`              // nonce: int nonce
+	Hash             string                 `json:"hash"`               // hash: string 块哈希
+	PrevBlockHash    string                 `json:"prev_block_hash"`    // prev_block_hash: string 前向块哈希，如不存在，则为 null
+	NextBlockHash    string                 `json:"next_block_hash"`    // next_block_hash: string 后向块哈希，如不存在，则为 null
+	Size             int64                  `json:"size"`               //size: int 块体积
+	PoolDifficulty   float64                `json:"pool_difficulty"`    // pool_difficulty: int 矿池难度
+	Difficulty       float64                `json:"difficulty"`         // difficulty: int 块难度
+	TxCount          int64                  `json:"tx_count"`           // tx_count: int 块奖励
+	RewardBlock      int64                  `json:"reward_block"`       // reward_block: int 块奖励
+	RewardFees       int64                  `json:"reward_fees"`        // reward_fees: int 块手续费
+	CreatedAt        int64                  `json:"created_at"`         // created_at: int 该记录系统处理时间，无业务含义
+	Confirmations    int64                  `json:"confirmations"`      // confirmations: int 确认数
+	Extras           map[string]interface{} `json:"extras"`
 }
 
 const (
@@ -144,34 +167,26 @@ func (b *Bitcoin) IsValidAccount(addr string) bool {
 }
 
 func (b *Bitcoin) BalanceOf(addr string, blkNum uint64) (d decimal.Decimal, err error) {
-	resp, err := http.Get(b.Host + "/address/" + addr)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	buf, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
-	var rd RespData
-	if err = json.Unmarshal(buf, &rd); err != nil {
-		return
-	}
-	if rd.ErrNo != 0 {
-		err = errors.New(rd.ErrMsg)
-		return
-	}
-	var ai AddrInfo
-	if err = json.Unmarshal(rd.Data, &ai); err != nil {
+	// https://chain.api.btc.com/v3/address/15urYnyeJe3gwbGJ74wcX89Tz7ZtsFDVew
+	var ai BtcAddrInfo
+	if err = b.request("/address/"+addr, &ai); err != nil {
 		return
 	}
 	d, err = ToBtc(ai.Balance)
-	//log.Printf("%+v\n", ai)
 	return
 }
 
 //block
-func (b *Bitcoin) LastBlockNumber() (blkNum uint64, err error)             { return }
+func (b *Bitcoin) LastBlockNumber() (blkNum uint64, err error) {
+	// https://chain.api.btc.com/v3/block/latest
+	var bi BtcBlockInfo
+	if err = b.request("/block/latest", &bi); err != nil {
+		return
+	}
+	log.Printf("%+v\n", bi)
+	blkNum = uint64(bi.Height)
+	return
+}
 func (b *Bitcoin) BlockByNumber(blkNum uint64) (bi interface{}, err error) { return }
 func (b *Bitcoin) BlockByHash(blkHash string) (bi interface{}, err error)  { return }
 
@@ -188,6 +203,28 @@ func (b *Bitcoin) Allowance(owner, agent string) (remain decimal.Decimal, err er
 //token
 func (b *Bitcoin) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error) { return }
 func (b *Bitcoin) IsToken() bool                                                      { return false }
+
+func (b *Bitcoin) request(url string, d interface{}) (err error) {
+	resp, err := http.Get(b.Host + url)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	buf, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	var rd RespData
+	if err = json.Unmarshal(buf, &rd); err != nil {
+		return
+	}
+	if rd.ErrNo != 0 {
+		err = errors.New(rd.ErrMsg)
+		return
+	}
+	err = json.Unmarshal(rd.Data, &d)
+	return
+}
 
 func ToBtc(ivalue interface{}) (b decimal.Decimal, err error) {
 	var v string
