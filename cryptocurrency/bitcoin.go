@@ -9,7 +9,6 @@ import (
 	"github.com/btcsuite/btcutil"
 	"github.com/shopspring/decimal"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -183,12 +182,21 @@ func (b *Bitcoin) LastBlockNumber() (blkNum uint64, err error) {
 	if err = b.request("/block/latest", &bi); err != nil {
 		return
 	}
-	log.Printf("%+v\n", bi)
 	blkNum = uint64(bi.Height)
 	return
 }
-func (b *Bitcoin) BlockByNumber(blkNum uint64) (bi interface{}, err error) { return }
-func (b *Bitcoin) BlockByHash(blkHash string) (bi interface{}, err error)  { return }
+
+func (b *Bitcoin) BlockByNumber(blkNum uint64) (bi interface{}, err error) {
+	// https://chain.api.btc.com/v3/block/3
+	// https://chain.api.btc.com/v3/block/3,4,5,latest
+	var bbi BtcBlockInfo
+	if err = b.request(fmt.Sprintf("/block/%d", blkNum), &bbi); err != nil {
+		return
+	}
+	bi = bbi
+	return
+}
+func (b *Bitcoin) BlockByHash(blkHash string) (bi interface{}, err error) { return }
 
 //transaction
 func (b *Bitcoin) TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error) { return }

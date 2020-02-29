@@ -72,4 +72,8 @@ func TestCryptoCurrencyBitcoin(t *testing.T) {
 	//get block number
 	blkNum, err := cc.LastBlockNumber()
 	t.Logf("last block= %d %v\n", blkNum, err)
+
+	//get block
+	bi, err := cc.BlockByNumber(619476)
+	t.Logf("blk content: %+v %v\n", bi, err)
 }
