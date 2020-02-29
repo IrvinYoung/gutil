@@ -4,14 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/ethereum/go-ethereum"
-	"log"
-	"math/big"
-	"regexp"
-	"strconv"
-	"strings"
-
 	"github.com/IrvinYoung/gutil/cryptocurrency/ERC20"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -19,6 +13,10 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/shopspring/decimal"
+	"log"
+	"math/big"
+	"regexp"
+	"strconv"
 )
 
 type Ethereum struct {
@@ -79,7 +77,7 @@ func (e *Ethereum) Decimal() int64 {
 }
 
 //account
-func (e *Ethereum) AllocAccount(password, salt string,params map[string]interface{}) (addr, priv string, err error) {
+func (e *Ethereum) AllocAccount(password, salt string,params interface{}) (addr, priv string, err error) {
 	privateKeyECDSA, err := crypto.GenerateKey()
 	if err != nil {
 		return
@@ -376,37 +374,5 @@ func ToWei(iamount interface{}, decimals int64) (amount *big.Int, err error) {
 		return
 	}
 	amount = d.Coefficient()
-	return
-}
-
-func shiftDot(f string, decimals int) (t string, err error) {
-	lr := strings.Split(f, ".")
-	if len(lr) > 2 || len(lr) < 1 {
-		err = errors.New("transform value failed,invalid number:" + f)
-		return
-	}
-	if decimals == 0 {
-		t = f
-		return
-	}
-	l, r := lr[0], ""
-	if len(lr) == 2 {
-		r = lr[1]
-	}
-	if decimals < 0 {
-		decimals = 0 - decimals
-		if decimals >= len(l) {
-			t = "0." + strings.Repeat("0", decimals-len(l)) + l + r
-		} else {
-			t = l[:len(l)-decimals] + "." + l[len(l)-decimals:] + r
-		}
-	} else {
-		if decimals >= len(r) {
-			t = l + r + strings.Repeat("0", decimals-len(r))
-			t = strings.TrimLeft(t, "0")
-		} else {
-			t = l + r[:decimals] + "." + r[decimals:]
-		}
-	}
 	return
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/IrvinYoung/gutil/crypto"
 	"github.com/shopspring/decimal"
+	"strings"
 )
 
 type CryptoCurrency interface {
@@ -16,7 +17,7 @@ type CryptoCurrency interface {
 	TotalSupply() decimal.Decimal
 
 	//account
-	AllocAccount(password, salt string,params map[string]interface{}) (addr, priv string, err error)
+	AllocAccount(password, salt string,params interface{}) (addr, priv string, err error)
 	IsValidAccount(addr string) bool
 	BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, err error)
 
@@ -105,5 +106,37 @@ func DecryptPrivKey(pwd, salt, from string) (to string, err error) {
 		return
 	}
 	to = string(origText[len(salt):])
+	return
+}
+
+func shiftDot(f string, decimals int) (t string, err error) {
+	lr := strings.Split(f, ".")
+	if len(lr) > 2 || len(lr) < 1 {
+		err = errors.New("transform value failed,invalid number:" + f)
+		return
+	}
+	if decimals == 0 {
+		t = f
+		return
+	}
+	l, r := lr[0], ""
+	if len(lr) == 2 {
+		r = lr[1]
+	}
+	if decimals < 0 {
+		decimals = 0 - decimals
+		if decimals >= len(l) {
+			t = "0." + strings.Repeat("0", decimals-len(l)) + l + r
+		} else {
+			t = l[:len(l)-decimals] + "." + l[len(l)-decimals:] + r
+		}
+	} else {
+		if decimals >= len(r) {
+			t = l + r + strings.Repeat("0", decimals-len(r))
+			t = strings.TrimLeft(t, "0")
+		} else {
+			t = l + r[:decimals] + "." + r[decimals:]
+		}
+	}
 	return
 }
