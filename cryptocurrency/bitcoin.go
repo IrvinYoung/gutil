@@ -376,17 +376,30 @@ func (b *Bitcoin) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error) {
 	return
 }
 
-func (b *Bitcoin) MakeTransaction([]*TxFrom, []*TxTo) (txSigned interface{}, err error) { return }
-func (b *Bitcoin) SendTransaction(txSigned interface{}) (txHash string, err error)      { return }
-func (b *Bitcoin) MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo) (txSigned interface{}, err error) {
+func (b *Bitcoin) MakeTransaction([]*TxFrom, []*TxTo) (txSigned interface{}, err error) {
 	return
 }
-func (b *Bitcoin) ApproveAgent(*TxFrom, *TxTo) (txSigned interface{}, err error)     { return }
-func (b *Bitcoin) Allowance(owner, agent string) (remain decimal.Decimal, err error) { return }
+
+func (b *Bitcoin) SendTransaction(txSigned interface{}) (txHash string, err error) { return }
+func (b *Bitcoin) MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo) (txSigned interface{}, err error) {
+	err = errors.New("not support")
+	return
+}
+func (b *Bitcoin) ApproveAgent(*TxFrom, *TxTo) (txSigned interface{}, err error) {
+	err = errors.New("not support")
+	return
+}
+func (b *Bitcoin) Allowance(owner, agent string) (remain decimal.Decimal, err error) {
+	err = errors.New("not support")
+	return
+}
 
 //token
-func (b *Bitcoin) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error) { return }
-func (b *Bitcoin) IsToken() bool                                                      { return false }
+func (b *Bitcoin) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error) {
+	err = errors.New("not support")
+	return
+}
+func (b *Bitcoin) IsToken() bool { return false }
 
 func (b *Bitcoin) request(url string, d interface{}) (err error) {
 	resp, err := http.Get(b.Host + url)
