@@ -283,7 +283,18 @@ func (b *Bitcoin) TransactionsInBlocks(from, to uint64) (txs []*TransactionRecor
 	//等级 1，包含交易信息；
 	//等级 2，包含等级 1、交易的输入、输出地址与金额；
 	//等级 3，包含等级 2、交易的输入、输入 script 等信息。
-	txs, err = b.getBlkTxs(from)
+	if from > to {
+		err = errors.New("params error")
+		return
+	}
+	txs = make([]*TransactionRecord, 0)
+	var tmp []*TransactionRecord
+	for i := from; i <= to; i++ {
+		if tmp, err = b.getBlkTxs(i); err != nil {
+			return
+		}
+		txs = append(txs, tmp...)
+	}
 	return
 }
 
