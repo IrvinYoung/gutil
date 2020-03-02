@@ -30,7 +30,7 @@ func TestCryptoCurrencyBitcoin(t *testing.T) {
 
 	a, p, err = cc.AllocAccount("passwordpassword", "salt", BitcoinKeyTypeP2WSH)
 	t.Logf("P2WSH\taddr=%s\tpriv=%s\terr=%v\n", a, p, err)
-	return
+
 	//check addr valid
 	addrs := []string{
 		"12sQsrgs3Ypo6MqbaYHRKs7ADh8oMphWhC",

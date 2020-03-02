@@ -5,6 +5,7 @@ package cryptocurrency
 //not bitcoin wallet RPC
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,7 +14,6 @@ import (
 	"github.com/btcsuite/btcutil"
 	"github.com/shopspring/decimal"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -292,6 +292,10 @@ func (b *Bitcoin) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error) {
 		btp    *BtcTxPage
 		page   int64 = 1
 		amount decimal.Decimal
+		buf    []byte
+
+		awph *btcutil.AddressWitnessPubKeyHash
+		awsh *btcutil.AddressWitnessScriptHash
 	)
 	for { //each page
 		btp = &BtcTxPage{}
@@ -299,24 +303,24 @@ func (b *Bitcoin) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error) {
 			return
 		}
 		//don't consider of page size,because:i don't know how to setup
-		log.Printf("%d --> %d\n", blk, page)
+		//log.Printf("%d --> %d\n", blk, page)
 		for _, v := range btp.Txs { //each transaction
 			for index, o := range v.Outputs { //each output
 				if o.PayType == "NULL_DATA" {
-					log.Printf("txid=%s to=%v, value=%d type=%s\n", v.Hash, o.Addresses, o.Value, o.PayType)
+					//log.Printf("txid=%s to=%v, value=%d type=%s\n", v.Hash, o.Addresses, o.Value, o.PayType)
 					continue //skip NULL_DATA
 				}
 				if o.PayType == "P2PKH_MULTISIG" {
-					log.Printf("txid=%s to=%v, value=%d type=%s\n", v.Hash, o.Addresses, o.Value, o.PayType)
+					//log.Printf("txid=%s to=%v, value=%d type=%s\n", v.Hash, o.Addresses, o.Value, o.PayType)
 					continue // skip P2PKH_MULTISIG
 				}
 				if len(o.Addresses) > 1 {
-					log.Printf("txid=%s to=%v, value=%d type=%s\n", v.Hash, o.Addresses, o.Value, o.PayType)
+					//log.Printf("txid=%s to=%v, value=%d type=%s\n", v.Hash, o.Addresses, o.Value, o.PayType)
 					continue //skip multi sign
 				}
-				log.Printf("txid=%s to=%v, value=%d type=%s\n", v.Hash, o.Addresses, o.Value, o.PayType)
+				//log.Printf("txid=%s to=%v, value=%d type=%s\n", v.Hash, o.Addresses, o.Value, o.PayType)
 				if amount, err = ToBtc(o.Value); err != nil {
-					log.Printf("transfer amount failed, txid=%s, o_index=%d\n", v.Hash, index)
+					//log.Printf("transfer amount failed, txid=%s, o_index=%d\n", v.Hash, index)
 					continue
 				}
 				tx := &TransactionRecord{
@@ -330,7 +334,22 @@ func (b *Bitcoin) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error) {
 					TimeStamp:   v.BlockTime,
 				}
 				if strings.HasPrefix(o.PayType, BitcoinKeyTypeP2WPKH) {
-					log.Println("todo: format address")
+					if buf, err = hex.DecodeString(tx.To); err != nil {
+						continue
+					}
+					if awph, err = btcutil.NewAddressWitnessPubKeyHash(buf, b.net); err != nil {
+						continue
+					}
+					tx.To = awph.EncodeAddress()
+				}
+				if strings.HasPrefix(o.PayType, BitcoinKeyTypeP2WSH) {
+					if buf, err = hex.DecodeString(tx.To); err != nil {
+						continue
+					}
+					if awsh, err = btcutil.NewAddressWitnessScriptHash(buf, b.net); err != nil {
+						continue
+					}
+					tx.To = awsh.EncodeAddress()
 				}
 				txs = append(txs, tx)
 			}
