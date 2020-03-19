@@ -212,8 +212,16 @@ func (e *Ethereum) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error) {
 }
 
 func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo, params interface{}) (txSigned interface{}, err error) {
-	if len(from) != 1 || len(to) != 1 {
+	if len(from) != 1 || len(to) != 1 || params == nil {
 		err = errors.New("params error")
+		return
+	}
+	var gasLimit uint64
+	switch params.(type) {
+	case uint64:
+		gasLimit = params.(uint64)
+	default:
+		err = errors.New("invalid params format")
 		return
 	}
 	if !e.IsValidAccount(from[0].From) || !e.IsValidAccount(to[0].To) {
@@ -244,13 +252,7 @@ func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo, params interface{
 	if err != nil {
 		return
 	}
-	//3. gas limit	//compute again, not use default value: 21000
-	msg := ethereum.CallMsg{From: addrFrom, To: &addrTo, GasPrice: gasPrice, Value: amount, Data: nil}
-	gasLimit, err := e.c.EstimateGas(e.ctx, msg)
-	if err != nil {
-		return
-	}
-	//4. check balance
+	//3. check balance
 	cost := new(big.Int).Mul(gasPrice, big.NewInt(int64(gasLimit)))
 	cost = new(big.Int).Add(cost, amount)
 	balance, err := e.c.BalanceAt(e.ctx, addrFrom, nil)
@@ -261,7 +263,7 @@ func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo, params interface{
 		err = errors.New("no more balance")
 		return
 	}
-	//5. make tx
+	//4. make tx
 	tx := types.NewTransaction(nonce, addrTo, amount, gasLimit, gasPrice, nil)
 	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(e.chainID), priv)
 	if err != nil {
@@ -295,7 +297,7 @@ func (e *Ethereum) Allowance(owner, agent string) (remain decimal.Decimal, err e
 	return
 }
 
-func (e *Ethereum) EstimateFee(from []*TxFrom, to []*TxTo, d interface{}) (fee decimal.Decimal, err error) {
+func (e *Ethereum) EstimateFee(from []*TxFrom, to []*TxTo, d interface{}) (fee decimal.Decimal, limit uint64, err error) {
 	if len(from) != 1 || len(to) != 1 {
 		err = errors.New("params error")
 		return
@@ -314,8 +316,7 @@ func (e *Ethereum) EstimateFee(from []*TxFrom, to []*TxTo, d interface{}) (fee d
 		To:    &addrTo,
 		Value: amount,
 	}
-	limit, err := e.c.EstimateGas(e.ctx, msg)
-	if err != nil {
+	if limit, err = e.c.EstimateGas(e.ctx, msg); err != nil {
 		return
 	}
 	price, err := e.c.SuggestGasPrice(e.ctx)

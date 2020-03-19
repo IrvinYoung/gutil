@@ -227,9 +227,9 @@ func TestEstimateFee(t *testing.T) {
 			Value: decimal.New(17, -5),
 		},
 	}
-	fee, err := cc.EstimateFee(from, to, nil)
+	fee,txSize,err := cc.EstimateFee(from, to, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("fee=", fee)
+	t.Log("fee=", fee,"txSize=",txSize)
 }

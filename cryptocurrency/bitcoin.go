@@ -506,7 +506,7 @@ func (b *Bitcoin) Allowance(owner, agent string) (remain decimal.Decimal, err er
 	return
 }
 
-func (b *Bitcoin) EstimateFee(from []*TxFrom, to []*TxTo, params interface{}) (fee decimal.Decimal, err error) {
+func (b *Bitcoin) EstimateFee(from []*TxFrom, to []*TxTo, params interface{}) (fee decimal.Decimal, txSize uint64, err error) {
 	if b.FeePerBytes <= 0 {
 		var blk uint64
 		if blk, err = b.LastBlockNumber(); err != nil {
@@ -531,6 +531,7 @@ func (b *Bitcoin) EstimateFee(from []*TxFrom, to []*TxTo, params interface{}) (f
 	if err = msg.BtcEncode(&buf, 70002, wire.WitnessEncoding); err != nil {
 		return
 	}
+	txSize = uint64(buf.Len())
 	fee, err = ToBtc(int64(buf.Len()) * b.FeePerBytes)
 	return
 }

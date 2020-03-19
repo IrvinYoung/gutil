@@ -33,7 +33,7 @@ type CryptoCurrency interface {
 	MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo) (txSigned interface{}, err error)
 	ApproveAgent(*TxFrom, *TxTo) (txSigned interface{}, err error)
 	Allowance(owner, agent string) (remain decimal.Decimal, err error)
-	EstimateFee([]*TxFrom, []*TxTo, interface{}) (decimal.Decimal, error)
+	EstimateFee([]*TxFrom, []*TxTo, interface{}) (decimal.Decimal, uint64, error)
 
 	//token
 	TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error)

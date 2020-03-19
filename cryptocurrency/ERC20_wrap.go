@@ -161,8 +161,16 @@ func (et *EthToken) TransactionsInBlocks(from, to uint64) (txs []*TransactionRec
 
 func (et *EthToken) MakeTransaction(from []*TxFrom, to []*TxTo, params interface{}) (txSigned interface{}, err error) {
 	//make raw transaction, don't run token transfer
-	if len(from) != 1 || len(to) != 1 {
+	if len(from) != 1 || len(to) != 1 || params == nil {
 		err = errors.New("params error")
+		return
+	}
+	var gasLimit uint64
+	switch params.(type) {
+	case uint64:
+		gasLimit = params.(uint64)
+	default:
+		err = errors.New("invalid params format")
 		return
 	}
 	if !et.IsValidAccount(from[0].From) || !et.IsValidAccount(to[0].To) {
@@ -193,7 +201,7 @@ func (et *EthToken) MakeTransaction(from []*TxFrom, to []*TxTo, params interface
 	if err != nil {
 		return
 	}
-	//3. gas limit
+	//3. contract data
 	parsed, err := abi.JSON(strings.NewReader(ERC20.ERC20ABI))
 	if err != nil {
 		return
@@ -203,11 +211,6 @@ func (et *EthToken) MakeTransaction(from []*TxFrom, to []*TxTo, params interface
 		return
 	}
 	addrToken := common.HexToAddress(et.Contract)
-	msg := ethereum.CallMsg{From: addrFrom, To: &addrToken, GasPrice: gasPrice, Value: nil, Data: data}
-	gasLimit, err := et.c.EstimateGas(et.ctx, msg)
-	if err != nil {
-		return
-	}
 	//4. check eth balance
 	fee := new(big.Int).Mul(gasPrice, big.NewInt(int64(gasLimit)))
 	ethBalance, err := et.c.BalanceAt(et.ctx, addrFrom, nil)
@@ -409,7 +412,7 @@ func (et *EthToken) Allowance(owner, agent string) (remain decimal.Decimal, err 
 	return
 }
 
-func (et *EthToken) EstimateFee(from []*TxFrom, to []*TxTo, d interface{}) (fee decimal.Decimal, err error) {
+func (et *EthToken) EstimateFee(from []*TxFrom, to []*TxTo, d interface{}) (fee decimal.Decimal, limit uint64, err error) {
 	if len(from) != 1 || len(to) != 1 {
 		err = errors.New("params error")
 		return
@@ -438,8 +441,7 @@ func (et *EthToken) EstimateFee(from []*TxFrom, to []*TxTo, d interface{}) (fee 
 		To:   &addrToken,
 		Data: data,
 	}
-	limit, err := et.c.EstimateGas(et.ctx, msg)
-	if err != nil {
+	if limit, err = et.c.EstimateGas(et.ctx, msg); err != nil {
 		return
 	}
 	price, err := et.c.SuggestGasPrice(et.ctx)
