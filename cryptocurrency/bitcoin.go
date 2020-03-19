@@ -19,8 +19,8 @@ import (
 	"github.com/btcsuite/btcwallet/wallet/txauthor"
 	"github.com/shopspring/decimal"
 	"io/ioutil"
-	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -69,6 +69,10 @@ type BtcBlockInfo struct {
 	CreatedAt        int64                  `json:"created_at"`         // created_at: int 该记录系统处理时间，无业务含义
 	Confirmations    int64                  `json:"confirmations"`      // confirmations: int 确认数
 	Extras           map[string]interface{} `json:"extras"`
+}
+
+type BtcPublishInfo struct {
+	Txid string `json:"txid"`	//todo: i don't know the response data
 }
 
 type BtcTxInput struct {
@@ -241,7 +245,7 @@ func (b *Bitcoin) IsValidAccount(addr string) bool {
 func (b *Bitcoin) BalanceOf(addr string, blkNum uint64) (d decimal.Decimal, err error) {
 	// https://chain.api.btc.com/v3/address/15urYnyeJe3gwbGJ74wcX89Tz7ZtsFDVew
 	var ai BtcAddrInfo
-	if err = b.request("/address/"+addr, &ai); err != nil {
+	if err = b.requestGet("/address/"+addr, &ai); err != nil {
 		return
 	}
 	d, err = ToBtc(ai.Balance)
@@ -252,7 +256,7 @@ func (b *Bitcoin) BalanceOf(addr string, blkNum uint64) (d decimal.Decimal, err 
 func (b *Bitcoin) LastBlockNumber() (blkNum uint64, err error) {
 	// https://chain.api.btc.com/v3/block/latest
 	var bi BtcBlockInfo
-	if err = b.request("/block/latest", &bi); err != nil {
+	if err = b.requestGet("/block/latest", &bi); err != nil {
 		return
 	}
 	blkNum = uint64(bi.Height)
@@ -263,7 +267,7 @@ func (b *Bitcoin) BlockByNumber(blkNum uint64) (bi interface{}, err error) {
 	// https://chain.api.btc.com/v3/block/3
 	// https://chain.api.btc.com/v3/block/3,4,5,latest
 	var bbi BtcBlockInfo
-	if err = b.request(fmt.Sprintf("/block/%d", blkNum), &bbi); err != nil {
+	if err = b.requestGet(fmt.Sprintf("/block/%d", blkNum), &bbi); err != nil {
 		return
 	}
 	bi = bbi
@@ -274,7 +278,7 @@ func (b *Bitcoin) BlockByHash(blkHash string) (bi interface{}, err error) {
 	// https://chain.api.btc.com/v3/block/3
 	// https://chain.api.btc.com/v3/block/3,4,5,latest
 	var bbi BtcBlockInfo
-	if err = b.request(fmt.Sprintf("/block/%s", blkHash), &bbi); err != nil {
+	if err = b.requestGet(fmt.Sprintf("/block/%s", blkHash), &bbi); err != nil {
 		return
 	}
 	bi = bbi
@@ -315,7 +319,7 @@ func (b *Bitcoin) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error) {
 	)
 	for { //each page
 		btp = &BtcTxPage{}
-		if err = b.request(fmt.Sprintf("/block/%d/tx?verbose=3&page=%d", blk, page), btp); err != nil {
+		if err = b.requestGet(fmt.Sprintf("/block/%d/tx?verbose=3&page=%d", blk, page), btp); err != nil {
 			return
 		}
 		for _, v := range btp.Txs { //each transaction
@@ -468,12 +472,23 @@ func (b *Bitcoin) MakeTransaction(from []*TxFrom, to []*TxTo, params interface{}
 		return
 	}
 	tx := btcutil.NewTx(mtx)
-	txStr, err := btcMsgToHex(tx.MsgTx())
-	log.Printf("hasSegWit=%v txStr= %s %v\n", tx.HasWitness(), txStr, err)
 	return tx, nil
 }
 
-func (b *Bitcoin) SendTransaction(txSigned interface{}) (txHash string, err error) { return }
+func (b *Bitcoin) SendTransaction(txSigned interface{}) (txHash string, err error) {
+	// https://chain.api.btc.com/v3/tools/tx-publish
+	tx := txSigned.(*btcutil.Tx)
+	txStr, err := btcMsgToHex(tx.MsgTx())
+	if err != nil {
+		return
+	}
+	var bpi BtcPublishInfo
+	if err = b.requestPost("/tools/tx-publish", txStr, &bpi); err != nil {
+		return
+	}
+	txHash = bpi.Txid
+	return
+}
 
 func (b *Bitcoin) MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo) (txSigned interface{}, err error) {
 	err = errors.New("not support")
@@ -495,8 +510,32 @@ func (b *Bitcoin) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err e
 }
 func (b *Bitcoin) IsToken() bool { return false }
 
-func (b *Bitcoin) request(url string, d interface{}) (err error) {
+func (b *Bitcoin) requestGet(url string, d interface{}) (err error) {
 	resp, err := http.Get(b.Host + url)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	buf, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	var rd RespData
+	if err = json.Unmarshal(buf, &rd); err != nil {
+		return
+	}
+	if rd.ErrNo != 0 {
+		err = errors.New(rd.ErrMsg)
+		return
+	}
+	err = json.Unmarshal(rd.Data, &d)
+	return
+}
+
+func (b *Bitcoin) requestPost(addr string, data interface{}, d interface{}) (err error) {
+	values := make(url.Values)
+	values.Set("rawhex", data.(string))
+	resp, err := http.PostForm(b.Host+addr, values)
 	if err != nil {
 		return
 	}

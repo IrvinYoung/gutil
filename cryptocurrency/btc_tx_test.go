@@ -132,3 +132,56 @@ func TestMakeTx1(t *testing.T) {
 	}
 	t.Logf("%+v\n", txSign)
 }
+
+func TestPublishTx(t *testing.T){
+	var (
+		cc  CryptoCurrency
+		err error
+	)
+	cc, err = InitBitcoinClient("https://chain.api.btc.com/v3", true, &chaincfg.TestNet3Params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("name=", cc.CoinName())
+
+	//make transaction
+	from := []*TxFrom{
+		&TxFrom{
+			From:       "mk92td6Dm6LZ9AgMLSBaTEBgSo2FhZhMN8",
+			TxHash:     "5e8c892ce0b951f03f2c3652b8577570b8b4f415bed3df5775c360a5bebe6d25",
+			PrivateKey: "cSXSbV34fHjr4NL7ScVCEVGcDpak497SepBRM9uAPaXDnb5UDTRF",
+			Index:      0,
+			Amount: decimal.New(6,-4),
+		},
+		&TxFrom{
+			From:       "2N4eAFwmfErArLn7FF3rxiN4xQdgpLLeWjZ",
+			TxHash:     "5e8c892ce0b951f03f2c3652b8577570b8b4f415bed3df5775c360a5bebe6d25",
+			PrivateKey: "cNRJWdvd76VS3HPNCeyny9wx7b4kKgSKy8sUcn2w6XfQecgVk9G4",
+			Index:      1,
+			Amount:     decimal.New(6, -4),
+		},
+		&TxFrom{
+			From:       "tb1qdg8acm6hg5q0gumxqhzpp69852pupehh9f4tac",
+			TxHash:     "5e8c892ce0b951f03f2c3652b8577570b8b4f415bed3df5775c360a5bebe6d25",
+			PrivateKey: "cQCbugctcCW76PQ5xWcVUVCa9HHcRBMV3KTbnmnnFxP8D9xNCJ27",
+			Index:      2,
+			Amount:     decimal.New(6, -4),
+		},
+	}
+	to := []*TxTo{
+		&TxTo{ //P2KH
+			To:    "2NGZrVvZG92qGYqzTLjCAewvPZ7JE8S8VxE",
+			Value: decimal.New(17, -5),
+		},
+	}
+	txSign, err := cc.MakeTransaction(from, to, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	//publish it
+	txHash,err := cc.SendTransaction(txSign)
+	if err!=nil{
+		t.Fatal(err)
+	}
+	t.Log("txid=",txHash)
+}
