@@ -6,7 +6,7 @@
 | Estimate transaction fee      | √       | √        | √     |
 | Get balance of address        | √       | √        | √     |
 | Check validity of address     | √       | √        | √     |
-| Get block by number of hash   | √       | √        | √     |
+| Get block by number or hash   | √       | √        | √     |
 | Get transactions in blocks    | √       | √        | √     |
 | Get last block number         | √       | √        | √     |
 | Approve,Allowance             |         |          | √     |
