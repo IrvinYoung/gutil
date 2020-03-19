@@ -212,7 +212,7 @@ func (e *Ethereum) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error) {
 	return
 }
 
-func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo) (txSigned interface{}, err error) {
+func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo,params interface{}) (txSigned interface{}, err error) {
 	if len(from) != 1 || len(to) != 1 {
 		err = errors.New("params error")
 		return

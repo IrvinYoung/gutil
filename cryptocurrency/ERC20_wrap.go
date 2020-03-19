@@ -159,7 +159,7 @@ func (et *EthToken) TransactionsInBlocks(from, to uint64) (txs []*TransactionRec
 	return
 }
 
-func (et *EthToken) MakeTransaction(from []*TxFrom, to []*TxTo) (txSigned interface{}, err error) {
+func (et *EthToken) MakeTransaction(from []*TxFrom, to []*TxTo,params interface{}) (txSigned interface{}, err error) {
 	//make raw transaction, don't run token transfer
 	if len(from) != 1 || len(to) != 1 {
 		err = errors.New("params error")

@@ -17,7 +17,7 @@ type CryptoCurrency interface {
 	TotalSupply() decimal.Decimal
 
 	//account
-	AllocAccount(password, salt string,params interface{}) (addr, priv string, err error)
+	AllocAccount(password, salt string, params interface{}) (addr, priv string, err error)
 	IsValidAccount(addr string) bool
 	BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, err error)
 
@@ -28,10 +28,10 @@ type CryptoCurrency interface {
 
 	//transaction
 	TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error)
-	MakeTransaction([]*TxFrom, []*TxTo) (txSigned interface{}, err error)
+	MakeTransaction([]*TxFrom, []*TxTo, interface{}) (txSigned interface{}, err error)
 	SendTransaction(txSigned interface{}) (txHash string, err error)
 	MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo) (txSigned interface{}, err error)
-	ApproveAgent(*TxFrom, *TxTo) (txSigned interface{},err error)
+	ApproveAgent(*TxFrom, *TxTo) (txSigned interface{}, err error)
 	Allowance(owner, agent string) (remain decimal.Decimal, err error)
 
 	//token
@@ -40,9 +40,12 @@ type CryptoCurrency interface {
 }
 
 type TxFrom struct {
-	From       string
+	From       string //address
 	PrivateKey string
-	Index      uint64 //for UTXO
+
+	Amount decimal.Decimal	//for segwit
+	TxHash string //for UTXO
+	Index  uint64 //for UTXO
 }
 
 type TxTo struct {

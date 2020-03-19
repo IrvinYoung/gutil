@@ -11,7 +11,7 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	cc = &Ethereum{}
 
 	//get account
-	a, p, err := cc.AllocAccount("passwordpassword", "salt",nil)
+	a, p, err := cc.AllocAccount("passwordpassword", "salt", nil)
 	t.Logf("account: addr=%s priv=%s err=%v\n", a, p, err)
 	//decrypt private key
 	priv, err := DecryptPrivKey("passwordpassword", "salt", p)
@@ -106,7 +106,7 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 			Value: decimal.New(1, 0),
 		},
 	}
-	tx, err := cc.MakeTransaction(from, to)
+	tx, err := cc.MakeTransaction(from, to, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -136,7 +136,7 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 			Value: decimal.New(1, -3),
 		},
 	}
-	tx, err = token.MakeTransaction(from, to)
+	tx, err = token.MakeTransaction(from, to, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
