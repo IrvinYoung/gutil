@@ -32,4 +32,12 @@
 *电子邮件服务*
 
 - [Implemented by gomail]()
+  
     > [gomail](https://github.com/go-gomail/gomail)
+
+
+
+## cryptocurrency
+*加密数字货币开发库*
+目前支持bitcoin,ethereum,ERC20，具体功能请参考：[readme](https://github.com/IrvinYoung/gutil/tree/master/cryptocurrency)
+
