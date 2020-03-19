@@ -134,7 +134,6 @@ func (e *Ethereum) LastBlockNumber() (blkNum uint64, err error) {
 	blkNum = hexutil.MustDecodeUint64(num)
 	return
 }
-
 func (e *Ethereum) BlockByNumber(blkNum uint64) (bi interface{}, err error) {
 	b, err := e.c.BlockByNumber(e.ctx, big.NewInt(int64(blkNum)))
 	if err != nil {
@@ -296,7 +295,35 @@ func (e *Ethereum) Allowance(owner, agent string) (remain decimal.Decimal, err e
 	return
 }
 
-func (e *Ethereum) EstimateFee(from []*TxFrom, to []*TxTo, d interface{}) (fee decimal.Decimal,err error) {
+func (e *Ethereum) EstimateFee(from []*TxFrom, to []*TxTo, d interface{}) (fee decimal.Decimal, err error) {
+	if len(from) != 1 || len(to) != 1 {
+		err = errors.New("params error")
+		return
+	}
+	if !e.IsValidAccount(from[0].From) || !e.IsValidAccount(to[0].To) {
+		err = errors.New("address is invalid")
+		return
+	}
+	addrTo := common.HexToAddress(to[0].To)
+	amount, err := ToWei(to[0].Value, e.Decimal())
+	if err != nil {
+		return
+	}
+	msg := ethereum.CallMsg{
+		From:  common.HexToAddress(from[0].From),
+		To:    &addrTo,
+		Value: amount,
+	}
+	limit, err := e.c.EstimateGas(e.ctx, msg)
+	if err != nil {
+		return
+	}
+	price, err := e.c.SuggestGasPrice(e.ctx)
+	if err != nil {
+		return
+	}
+	fee = decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromInt(int64(limit)))
+	fee, err = ToDecimal(fee, 18)
 	return
 }
 

@@ -202,3 +202,38 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	remain, _ = token.Allowance(owner.From, agent.To)
 	t.Logf("after approve=%s\n", remain.String())
 }
+
+func TestEstimateEthFee(t *testing.T){
+	var cc CryptoCurrency
+	cc = &Ethereum{}
+
+	//init client
+	host := "http://127.0.0.1:7545"
+	cc, err := InitEthereumClient(host)
+	cc.(*Ethereum).Close()
+	e := &Ethereum{Host: host}
+	if err = e.Init(); err != nil {
+		t.Fatal("init ethereum failed,", err)
+	}
+	defer e.Close()
+	cc = e
+
+	//get fee
+	from := []*TxFrom{
+		&TxFrom{
+			From:       "0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1",
+			PrivateKey: "c821b8cdfe1b7dd195ffb00d17245f945ab893253ee846d987e362658a92585c",
+		},
+	}
+	to := []*TxTo{
+		&TxTo{
+			To:    "0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2",
+			Value: decimal.New(1, 0),
+		},
+	}
+	fee, err := cc.EstimateFee(from, to, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("fee=%s\n", fee)
+}
