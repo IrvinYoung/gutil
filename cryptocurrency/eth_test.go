@@ -203,7 +203,7 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	t.Logf("after approve=%s\n", remain.String())
 }
 
-func TestEstimateEthFee(t *testing.T){
+func TestEstimateEthFee(t *testing.T) {
 	var cc CryptoCurrency
 	cc = &Ethereum{}
 
@@ -235,5 +235,30 @@ func TestEstimateEthFee(t *testing.T){
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("fee=%s\n", fee)
+	t.Logf("eth fee=%s\n", fee)
+
+	//token fee
+	contractAddress := "0x6aa0cfdEFFefDd4968Cf550f9160D78AF9afd65F"
+	token, err := e.TokenInstance(contractAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer token.(*EthToken).Close()
+	from = []*TxFrom{
+		&TxFrom{
+			From:       "0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1",
+			PrivateKey: "c821b8cdfe1b7dd195ffb00d17245f945ab893253ee846d987e362658a92585c",
+		},
+	}
+	to = []*TxTo{
+		&TxTo{
+			To:    "0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2",
+			Value: decimal.New(1, -3),
+		},
+	}
+	fee, err = token.EstimateFee(from, to, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("token fee=%s\n", fee)
 }

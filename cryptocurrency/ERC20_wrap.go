@@ -159,7 +159,7 @@ func (et *EthToken) TransactionsInBlocks(from, to uint64) (txs []*TransactionRec
 	return
 }
 
-func (et *EthToken) MakeTransaction(from []*TxFrom, to []*TxTo,params interface{}) (txSigned interface{}, err error) {
+func (et *EthToken) MakeTransaction(from []*TxFrom, to []*TxTo, params interface{}) (txSigned interface{}, err error) {
 	//make raw transaction, don't run token transfer
 	if len(from) != 1 || len(to) != 1 {
 		err = errors.New("params error")
@@ -406,5 +406,47 @@ func (et *EthToken) Allowance(owner, agent string) (remain decimal.Decimal, err 
 		return
 	}
 	remain, err = ToDecimal(a, et.Decimal())
+	return
+}
+
+func (et *EthToken) EstimateFee(from []*TxFrom, to []*TxTo, d interface{}) (fee decimal.Decimal, err error) {
+	if len(from) != 1 || len(to) != 1 {
+		err = errors.New("params error")
+		return
+	}
+	if !et.IsValidAccount(from[0].From) || !et.IsValidAccount(to[0].To) {
+		err = errors.New("address is invalid")
+		return
+	}
+	amount, err := ToWei(to[0].Value, et.Decimal())
+	if err != nil {
+		return
+	}
+	parsed, err := abi.JSON(strings.NewReader(ERC20.ERC20ABI))
+	if err != nil {
+		return
+	}
+	addrTo := common.HexToAddress(to[0].To)
+	data, err := parsed.Pack("transfer", addrTo, amount)
+	if err != nil {
+		return
+	}
+	addrToken := common.HexToAddress(et.Contract)
+
+	msg := ethereum.CallMsg{
+		From: common.HexToAddress(from[0].From),
+		To:   &addrToken,
+		Data: data,
+	}
+	limit, err := et.c.EstimateGas(et.ctx, msg)
+	if err != nil {
+		return
+	}
+	price, err := et.c.SuggestGasPrice(et.ctx)
+	if err != nil {
+		return
+	}
+	fee = decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromInt(int64(limit)))
+	fee, err = ToDecimal(fee, 18)
 	return
 }
