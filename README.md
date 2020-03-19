@@ -40,5 +40,11 @@
 ## cryptocurrency
 *加密数字货币开发库*
 
+特性：
+
+1. 不需要(或弱化)钱包节点支持。
+2. 离线创建密钥对和地址，但不支持地址管理。
+3. 离线构建和签名RAW交易。
+
 目前支持bitcoin,ethereum,ERC20，具体功能请参考：[readme](https://github.com/IrvinYoung/gutil/tree/master/cryptocurrency)
 
