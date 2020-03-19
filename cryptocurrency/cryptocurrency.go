@@ -33,6 +33,7 @@ type CryptoCurrency interface {
 	MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo) (txSigned interface{}, err error)
 	ApproveAgent(*TxFrom, *TxTo) (txSigned interface{}, err error)
 	Allowance(owner, agent string) (remain decimal.Decimal, err error)
+	EstimateFee([]*TxFrom, []*TxTo, interface{}) (decimal.Decimal, error)
 
 	//token
 	TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error)
@@ -43,9 +44,9 @@ type TxFrom struct {
 	From       string //address
 	PrivateKey string
 
-	Amount decimal.Decimal	//for segwit
-	TxHash string //for UTXO
-	Index  uint64 //for UTXO
+	Amount decimal.Decimal //for segwit
+	TxHash string          //for UTXO
+	Index  uint64          //for UTXO
 }
 
 type TxTo struct {

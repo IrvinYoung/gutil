@@ -506,6 +506,35 @@ func (b *Bitcoin) Allowance(owner, agent string) (remain decimal.Decimal, err er
 	return
 }
 
+func (b *Bitcoin) EstimateFee(from []*TxFrom, to []*TxTo, params interface{}) (fee decimal.Decimal, err error) {
+	if b.FeePerBytes <= 0 {
+		var blk uint64
+		if blk, err = b.LastBlockNumber(); err != nil {
+			return
+		}
+		if _, err = b.BlockByNumber(blk); err != nil {
+			return
+		}
+	}
+	if b.FeePerBytes <= 0 {
+		err = errors.New("fee-per-byte is invalid")
+		return
+	}
+	txSign, err := b.MakeTransaction(from, to, nil)
+	if err != nil {
+		return
+	}
+	var (
+		msg = txSign.(*btcutil.Tx).MsgTx()
+		buf bytes.Buffer
+	)
+	if err = msg.BtcEncode(&buf, 70002, wire.WitnessEncoding); err != nil {
+		return
+	}
+	fee, err = ToBtc(int64(buf.Len()) * b.FeePerBytes)
+	return
+}
+
 //token
 func (b *Bitcoin) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error) {
 	err = errors.New("not support")

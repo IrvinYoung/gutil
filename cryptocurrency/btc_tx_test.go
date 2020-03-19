@@ -41,7 +41,7 @@ func TestMakeTx(t *testing.T) {
 			TxHash:     "c10c33df9736739623684eb6515743b7032585c13f7b28a5d6fc76606eef9922",
 			PrivateKey: "cRkzCe5a5mubPHdnrNNBExsxj46NPJSNypVknKRCebQq72jgto97",
 			Index:      0,
-			Amount: decimal.New(22,-5),
+			Amount:     decimal.New(22, -5),
 		},
 		&TxFrom{
 			//addr: 2N2fjVuY29MNeb7bA7PLg7uyZrCCnyQU22b
@@ -101,7 +101,7 @@ func TestMakeTx1(t *testing.T) {
 			TxHash:     "5e8c892ce0b951f03f2c3652b8577570b8b4f415bed3df5775c360a5bebe6d25",
 			PrivateKey: "cSXSbV34fHjr4NL7ScVCEVGcDpak497SepBRM9uAPaXDnb5UDTRF",
 			Index:      0,
-			Amount: decimal.New(6,-4),
+			Amount:     decimal.New(6, -4),
 		},
 		&TxFrom{
 			From:       "2N4eAFwmfErArLn7FF3rxiN4xQdgpLLeWjZ",
@@ -133,7 +133,7 @@ func TestMakeTx1(t *testing.T) {
 	t.Logf("%+v\n", txSign)
 }
 
-func TestPublishTx(t *testing.T){
+func TestPublishTx(t *testing.T) {
 	var (
 		cc  CryptoCurrency
 		err error
@@ -151,7 +151,7 @@ func TestPublishTx(t *testing.T){
 			TxHash:     "5e8c892ce0b951f03f2c3652b8577570b8b4f415bed3df5775c360a5bebe6d25",
 			PrivateKey: "cSXSbV34fHjr4NL7ScVCEVGcDpak497SepBRM9uAPaXDnb5UDTRF",
 			Index:      0,
-			Amount: decimal.New(6,-4),
+			Amount:     decimal.New(6, -4),
 		},
 		&TxFrom{
 			From:       "2N4eAFwmfErArLn7FF3rxiN4xQdgpLLeWjZ",
@@ -179,9 +179,57 @@ func TestPublishTx(t *testing.T){
 		t.Fatal(err)
 	}
 	//publish it
-	txHash,err := cc.SendTransaction(txSign)
-	if err!=nil{
+	txHash, err := cc.SendTransaction(txSign)
+	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("txid=",txHash)
+	t.Log("txid=", txHash)
+}
+
+func TestEstimateFee(t *testing.T) {
+	var (
+		cc  CryptoCurrency
+		err error
+	)
+	cc, err = InitBitcoinClient("https://chain.api.btc.com/v3", true, &chaincfg.TestNet3Params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("name=", cc.CoinName())
+
+	//make transaction
+	from := []*TxFrom{
+		&TxFrom{
+			From:       "mk92td6Dm6LZ9AgMLSBaTEBgSo2FhZhMN8",
+			TxHash:     "5e8c892ce0b951f03f2c3652b8577570b8b4f415bed3df5775c360a5bebe6d25",
+			PrivateKey: "cSXSbV34fHjr4NL7ScVCEVGcDpak497SepBRM9uAPaXDnb5UDTRF",
+			Index:      0,
+			Amount:     decimal.New(6, -4),
+		},
+		&TxFrom{
+			From:       "2N4eAFwmfErArLn7FF3rxiN4xQdgpLLeWjZ",
+			TxHash:     "5e8c892ce0b951f03f2c3652b8577570b8b4f415bed3df5775c360a5bebe6d25",
+			PrivateKey: "cNRJWdvd76VS3HPNCeyny9wx7b4kKgSKy8sUcn2w6XfQecgVk9G4",
+			Index:      1,
+			Amount:     decimal.New(6, -4),
+		},
+		&TxFrom{
+			From:       "tb1qdg8acm6hg5q0gumxqhzpp69852pupehh9f4tac",
+			TxHash:     "5e8c892ce0b951f03f2c3652b8577570b8b4f415bed3df5775c360a5bebe6d25",
+			PrivateKey: "cQCbugctcCW76PQ5xWcVUVCa9HHcRBMV3KTbnmnnFxP8D9xNCJ27",
+			Index:      2,
+			Amount:     decimal.New(6, -4),
+		},
+	}
+	to := []*TxTo{
+		&TxTo{ //P2KH
+			To:    "2NGZrVvZG92qGYqzTLjCAewvPZ7JE8S8VxE",
+			Value: decimal.New(17, -5),
+		},
+	}
+	fee, err := cc.EstimateFee(from, to, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("fee=", fee)
 }

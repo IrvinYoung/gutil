@@ -77,7 +77,7 @@ func (e *Ethereum) Decimal() int64 {
 }
 
 //account
-func (e *Ethereum) AllocAccount(password, salt string,params interface{}) (addr, priv string, err error) {
+func (e *Ethereum) AllocAccount(password, salt string, params interface{}) (addr, priv string, err error) {
 	privateKeyECDSA, err := crypto.GenerateKey()
 	if err != nil {
 		return
@@ -212,7 +212,7 @@ func (e *Ethereum) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error) {
 	return
 }
 
-func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo,params interface{}) (txSigned interface{}, err error) {
+func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo, params interface{}) (txSigned interface{}, err error) {
 	if len(from) != 1 || len(to) != 1 {
 		err = errors.New("params error")
 		return
@@ -293,6 +293,10 @@ func (e *Ethereum) ApproveAgent(owner *TxFrom, agent *TxTo) (txSigned interface{
 
 func (e *Ethereum) Allowance(owner, agent string) (remain decimal.Decimal, err error) {
 	err = errors.New("not support")
+	return
+}
+
+func (e *Ethereum) EstimateFee(from []*TxFrom, to []*TxTo, d interface{}) (fee decimal.Decimal,err error) {
 	return
 }
 
