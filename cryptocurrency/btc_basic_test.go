@@ -64,8 +64,9 @@ func TestCryptoCurrencyBitcoin(t *testing.T) {
 	t.Logf("last block= %d %v\n", blkNum, err)
 
 	//get block by number
-	bi, err := cc.BlockByNumber(blkNum - 1)
+	bi, err := cc.BlockByNumber(blkNum)
 	t.Logf("blk content: %+v %v\n", bi, err)
+	t.Log("fee per byte=",cc.(*Bitcoin).FeePerBytes)
 
 	//get block by hash
 	bi, err = cc.BlockByHash("00000000000000000010ff7ad8443865c89f2de3047e0c5d7f84dedd44e666b5")

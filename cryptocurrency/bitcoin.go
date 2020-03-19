@@ -29,6 +29,7 @@ type Bitcoin struct {
 	net            *chaincfg.Params
 	isAddrCompress bool
 	Host           string
+	FeePerBytes    int64
 }
 
 type RespData struct {
@@ -72,7 +73,7 @@ type BtcBlockInfo struct {
 }
 
 type BtcPublishInfo struct {
-	Txid string `json:"txid"`	//todo: i don't know the response data
+	Txid string `json:"txid"` //todo: i don't know the response data
 }
 
 type BtcTxInput struct {
@@ -271,6 +272,7 @@ func (b *Bitcoin) BlockByNumber(blkNum uint64) (bi interface{}, err error) {
 		return
 	}
 	bi = bbi
+	b.FeePerBytes = bbi.RewardFees / bbi.Size
 	return
 }
 
@@ -282,6 +284,7 @@ func (b *Bitcoin) BlockByHash(blkHash string) (bi interface{}, err error) {
 		return
 	}
 	bi = bbi
+	b.FeePerBytes = bbi.RewardFees / bbi.Size
 	return
 }
 
