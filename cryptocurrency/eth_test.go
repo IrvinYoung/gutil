@@ -2,6 +2,7 @@ package cryptocurrency
 
 import (
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/shopspring/decimal"
 	"testing"
 )
@@ -310,4 +311,14 @@ func TestMakeEthTx(t *testing.T) {
 	t.Logf("after: from - token balance %s %s\n", "0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", tokenBalance)
 	tokenBalance, _ = token.BalanceOf("0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2", 0)
 	t.Logf("after: to - token balance %s %s\n", "0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2", tokenBalance)
+}
+
+func TestGetAddr(t *testing.T){
+	privStr := "4e7a0e32045d7c732bac92cc36d3d2e8b1bbdc155ccc2394fb8af1b798aa59af"
+	priv, err := crypto.HexToECDSA(privStr)
+	if err!=nil{
+		t.Fatal(err)
+	}
+	address := crypto.PubkeyToAddress(priv.PublicKey)
+	t.Log("eth address=",address.String())
 }
