@@ -46,6 +46,7 @@ func InitBitcoinClient(host string, isAddrCompress bool, defaultNet *chaincfg.Pa
 		isAddrCompress: isAddrCompress,
 		Host:           host,
 	}
+	//todo: support blockchain.com
 	if strings.Contains(host, "btc.com") {
 		cc, err = InitBitcoinBtcComClient(b)	//btc.com
 	}else{
