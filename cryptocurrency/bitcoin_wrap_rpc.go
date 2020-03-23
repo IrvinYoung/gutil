@@ -150,14 +150,8 @@ func (b *BitcoinCore) SendTransaction(txSigned interface{}) (txHash string, err 
 }
 
 func (b *BitcoinCore) EstimateFee(from []*TxFrom, to []*TxTo, params interface{}) (fee decimal.Decimal, txSize uint64, err error) {
-	if b.FeePerBytes <= 0 {
-		var blk uint64
-		if blk, err = b.LastBlockNumber(); err != nil {
-			return
-		}
-		if _, err = b.BlockByNumber(blk); err != nil {
-			return
-		}
+	if err = b.estimateFee(); err != nil {
+		return
 	}
 	if b.FeePerBytes <= 0 {
 		err = errors.New("fee-per-byte is invalid")
