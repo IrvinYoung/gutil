@@ -6,12 +6,12 @@ import (
 	"testing"
 )
 
-func TestCryptoCurrencyBitcoin(t *testing.T) {
+func TestCryptoCurrencyBitcoinRPC(t *testing.T) {
 	var (
 		cc  CryptoCurrency
 		err error
 	)
-	cc, err = InitBitcoinClient("https://chain.api.btc.com/v3", true, &chaincfg.MainNetParams)
+	cc, err = InitBitcoinClient("myusername:12345678@127.0.0.1:8334", true, &chaincfg.TestNet3Params)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,14 +66,14 @@ func TestCryptoCurrencyBitcoin(t *testing.T) {
 	//get block by number
 	bi, err := cc.BlockByNumber(blkNum)
 	t.Logf("blk content: %+v %v\n", bi, err)
-	t.Log("fee per byte=",cc.(*BitcoinBtcCom).FeePerBytes)
+	t.Log("fee per byte=",cc.(*BitcoinCore).FeePerBytes)
 
 	//get block by hash
 	bi, err = cc.BlockByHash("00000000000000000010ff7ad8443865c89f2de3047e0c5d7f84dedd44e666b5")
 	t.Logf("blk content: %+v %v\n", bi, err)
 
 	//get tx in blocks
-	txs, err := cc.TransactionsInBlocks(blkNum, blkNum)
+	txs, err := cc.TransactionsInBlocks(blkNum-3, blkNum)
 	if err != nil {
 		t.Fatal(err)
 	}

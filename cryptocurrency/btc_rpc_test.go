@@ -1,121 +1,83 @@
 package cryptocurrency
 
 import (
-	"encoding/hex"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/btcsuite/btcd/txscript"
-	"github.com/btcsuite/btcutil"
+	"github.com/shopspring/decimal"
 	"testing"
 )
 
-func TestBTCRPC(t *testing.T) {
-	connCfg := &rpcclient.ConnConfig{
-		Host:         "localhost:8334",
-		User:         "myusername",
-		Pass:         "12345678",
-		HTTPPostMode: true, // Bitcoin core only supports HTTP POST mode
-		DisableTLS:   true, // Bitcoin core does not provide TLS by default
-	}
-	// Notice the notification parameter is nil since notifications are
-	// not supported in HTTP POST mode.
-	client, err := rpcclient.New(connCfg, nil)
+func TestCryptoCurrencyBitcoinBtcCom(t *testing.T) {
+	var (
+		cc  CryptoCurrency
+		err error
+	)
+	cc, err = InitBitcoinClient("https://chain.api.btc.com/v3", true, &chaincfg.MainNetParams)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer client.Shutdown()
+	t.Log("name=", cc.CoinName())
 
-	// Get the current block count.
-	blockCount, err := client.GetBlockCount()
-	if err != nil {
-		t.Log(err)
-	} else {
-		t.Logf("Block count: %d\n", blockCount)
+	a, p, err := cc.AllocAccount("passwordpassword", "salt", BitcoinAddrTypeLegacy)
+	t.Logf("P2PKH\taddr=%s\tpriv=%s\terr=%v\n", a, p, err)
+
+	a, p, err = cc.AllocAccount("passwordpassword", "salt", BitcoinAddrTypeP2SH)
+	t.Logf("P2SH\taddr=%s\tpriv=%s\terr=%v\n", a, p, err)
+
+	a, p, err = cc.AllocAccount("passwordpassword", "salt", BitcoinAddrTypeBench32)
+	t.Logf("P2WPKH\taddr=%s\tpriv=%s\terr=%v\n", a, p, err)
+
+	//check addr valid
+	addrs := []string{
+		"12sQsrgs3Ypo6MqbaYHRKs7ADh8oMphWhC",
+		"3D1GrdhTXCDG5vtAcwXt7vuM9nFLuzcEiH",
+		"bc1ql3eym3gl875t9hdgu9at9ce93h2rgcg6nnvt5e",
+		//wrong
+		"19WX95dxY3v92qqPLumvWedgnukh5UgSQB",
+		"3Joo2Hm2pxkMq1ztheeuHAUQLC311yjGxs",
+		"bc1q5r3zc0swmtstrcnkhld9mzynhemgtuja54e488",
 	}
-	//get block hash
-	blockCount = 1670838
-	bh, err := client.GetBlockHash(blockCount)
-	if err != nil {
-		t.Log(err)
-	} else {
-		t.Logf("hash of block %d = %s\n", blockCount, bh)
-	}
-	//net
-	cNet, err := client.GetCurrentNet()
-	if err != nil {
-		t.Log(err)
-	} else {
-		t.Log(cNet)
-	}
-	//get block by hash
-	blk, err := client.GetBlock(bh)
-	if err != nil {
-		t.Log(err)
-	} else {
-		t.Logf("blk content of %d = %+v\n", blockCount, blk)
-		for k, v := range blk.Transactions {
-			t.Logf("\t%02d : %s\n", k, v.TxHash())
-			for m, n := range v.TxIn {
-				t.Logf("\t\t* txIn %d -> %s\n", m, n.PreviousOutPoint)
-			}
-			for m, n := range v.TxOut {
-				//if n.PkScript[0] == txscript.OP_RETURN {
-				//	continue
-				//}
-				var pkScript txscript.PkScript
-				var addr btcutil.Address
-				pkType := txscript.GetScriptClass(n.PkScript)
-				switch pkType {
-				case txscript.NullDataTy:
-					t.Log("null data")
-					continue
-				case txscript.NonStandardTy:
-					t.Log("nonsupport:", hex.EncodeToString(n.PkScript))
-					continue
-				case txscript.PubKeyTy:
-					if addr, err = btcutil.NewAddressPubKey(n.PkScript[1:34], &chaincfg.TestNet3Params); err != nil {
-						t.Log(err)
-						continue
-					}
-				default:
-					if pkScript, err = txscript.ParsePkScript(n.PkScript); err != nil {
-						t.Log(hex.EncodeToString(n.PkScript))
-						t.Log(err)
-						continue
-					}
-					if addr, err = pkScript.Address(&chaincfg.TestNet3Params); err != nil {
-						t.Log(err)
-						continue
-					}
-				}
-				t.Logf("\t\t# txOut %d %s -> %s => %d\n", m, pkType, addr.EncodeAddress(), n.Value)
-			}
+	for _, v := range addrs {
+		if cc.IsValidAccount(v) {
+			t.Logf("valid\t%s", v)
+		} else {
+			t.Logf("invalid\t%s", v)
 		}
 	}
-	//estimate fee
-	fee, err := client.EstimateFee(1)
-	if err != nil {
-		t.Log("estimate fee error:", err)
-	} else {
-		t.Logf("fee: %f\n", fee)
-	}
-	//info
-	info, err := client.GetBlockChainInfo()
-	if err != nil {
-		t.Log("block chain info:", err)
-	} else {
-		t.Logf("info=%+v\n", info)
-	}
-}
 
-func TestEstimateBitcoinCoreFee(t *testing.T) {
-	cc, err := InitBitcoinClient("myusername:12345678@127.0.0.1:8334", true, &chaincfg.TestNet3Params)
+	//get balance
+	addrs = []string{
+		"1HtuUatKrJSR8PYs2qSxnxvPuYhf8UiCpB",
+		"3K3kszcpPfA79rAP8T9zXQQTLwUYuk5qEc",
+		"bc1qnsupj8eqya02nm8v6tmk93zslu2e2z8chlmcej",
+	}
+	var b decimal.Decimal
+	for _, v := range addrs {
+		if b, err = cc.BalanceOf(v, 0); err != nil {
+			t.Logf("balance\t%s failed,%v\n", v, err)
+			continue
+		}
+		t.Logf("balance\t%s %s\n", v, b.String())
+	}
+
+	//get latest block number
+	blkNum, err := cc.LastBlockNumber()
+	t.Logf("last block= %d %v\n", blkNum, err)
+
+	//get block by number
+	bi, err := cc.BlockByNumber(blkNum)
+	t.Logf("blk content: %+v %v\n", bi, err)
+	t.Log("fee per byte=",cc.(*BitcoinBtcCom).FeePerBytes)
+
+	//get block by hash
+	bi, err = cc.BlockByHash("00000000000000000010ff7ad8443865c89f2de3047e0c5d7f84dedd44e666b5")
+	t.Logf("blk content: %+v %v\n", bi, err)
+
+	//get tx in blocks
+	txs, err := cc.TransactionsInBlocks(blkNum, blkNum)
 	if err != nil {
 		t.Fatal(err)
 	}
-	b := cc.(*BitcoinCore)
-	if err = b.estimateFee(); err != nil {
-		t.Fatal(err)
+	for _, v := range txs {
+		t.Logf("txid=%s to=%s index=%d amount=%s\n", v.TxHash, v.To, v.Index, v.Value.String())
 	}
-	t.Log(b.FeePerBytes)
 }
