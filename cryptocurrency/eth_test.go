@@ -197,7 +197,7 @@ func TestEstimateEthFee(t *testing.T) {
 			Value: decimal.New(1, -3),
 		},
 	}
-	fee, gasLimit,err = token.EstimateFee(from, to, nil)
+	fee, gasLimit, err = token.EstimateFee(from, to, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -271,7 +271,7 @@ func TestMakeEthTx(t *testing.T) {
 			Value: decimal.New(1, -3),
 		},
 	}
-	fee,gasLimit, err = token.EstimateFee(from, to, nil)
+	fee, gasLimit, err = token.EstimateFee(from, to, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -313,12 +313,122 @@ func TestMakeEthTx(t *testing.T) {
 	t.Logf("after: to - token balance %s %s\n", "0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2", tokenBalance)
 }
 
-func TestGetAddr(t *testing.T){
+func TestGetAddr(t *testing.T) {
 	privStr := "4e7a0e32045d7c732bac92cc36d3d2e8b1bbdc155ccc2394fb8af1b798aa59af"
 	priv, err := crypto.HexToECDSA(privStr)
-	if err!=nil{
+	if err != nil {
 		t.Fatal(err)
 	}
 	address := crypto.PubkeyToAddress(priv.PublicKey)
-	t.Log("eth address=",address.String())
+	t.Log("eth address=", address.String())
+}
+
+func TestERC20TokenTransaction(t *testing.T) {
+	var cc CryptoCurrency
+	cc = &Ethereum{}
+
+	//init client
+	host := "http://127.0.0.1:7545"
+	var err error
+	e := &Ethereum{Host: host}
+	if err = e.Init(); err != nil {
+		t.Fatal("init ethereum failed,", err)
+	}
+	defer e.Close()
+
+	contractAddress := "0x6aa0cfdEFFefDd4968Cf550f9160D78AF9afd65F"
+	if cc, err = e.TokenInstance(contractAddress); err != nil {
+		t.Fatal(err)
+	}
+
+	//balance
+	agent := "0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1"
+	b, err := cc.BalanceOf(agent, 0)
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		t.Log("agnet-->", agent, b)
+	}
+	fAddr := "0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2"
+	b, err = cc.BalanceOf(fAddr, 0)
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		t.Log("from-->", fAddr, b)
+	}
+	tAddr := "0xfcdE17BA66F8EA6084a37AA04FD888d4Fd9a3847"
+	b, err = cc.BalanceOf(tAddr, 0)
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		t.Log("to-->", tAddr, b)
+	}
+	//set approve
+	tx, err := cc.ApproveAgent(
+		&TxFrom{
+			From:       fAddr,
+			PrivateKey: "90916eb92e2ed3d3c2f92713f6becb3a5b25d52c16dc5c3e3eff2b5d82f1204f",
+		},
+		&TxTo{
+			To:    agent,
+			Value: cc.TotalSupply(),
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+	txid, err := cc.SendTransaction(tx)
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		t.Log("approve txid=", txid)
+	}
+	//get allowance
+	remain, err := cc.Allowance(fAddr, agent)
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		t.Log("remain->", fAddr, remain)
+	}
+
+	//make tx
+	tx, err = cc.MakeAgentTransaction(fAddr,
+		[]*TxFrom{
+			&TxFrom{
+				From:       agent,
+				PrivateKey: "c821b8cdfe1b7dd195ffb00d17245f945ab893253ee846d987e362658a92585c",
+			}},
+		[]*TxTo{
+			&TxTo{
+				To:    tAddr,
+				Value: decimal.New(8, -3),
+			}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if txid, err = cc.SendTransaction(tx); err != nil {
+		t.Fatal(err)
+	} else {
+		t.Log("token txid=", txid)
+	}
+
+	//balance
+	b, err = cc.BalanceOf(agent, 0)
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		t.Log("agent-->", agent, b)
+	}
+	b, err = cc.BalanceOf(fAddr, 0)
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		t.Log("from-->", fAddr, b)
+	}
+	b, err = cc.BalanceOf(tAddr, 0)
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		t.Log("to-->", tAddr, b)
+	}
+	return
 }
