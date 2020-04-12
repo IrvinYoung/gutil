@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
@@ -120,6 +121,71 @@ func (b *BitcoinCore) BlockByHash(blkHash string) (bi interface{}, err error) {
 }
 
 //transaction
+func (b *BitcoinCore) Transaction(txHash, blkHash string) (txs []*TransactionRecord, isPending bool, err error) {
+	rand.Seed(time.Now().UnixNano())
+	id := rand.Int63()
+	query := fmt.Sprintf(`{"jsonrpc":"1.0","id":"%d","method":"getrawtransaction","params":["%s",true,"%s"]}`,
+		id, txHash, blkHash)
+	resp, err := http.Post("http://"+b.Host, "text/plain", strings.NewReader(query))
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	buf, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	var info struct {
+		Result json.RawMessage `json:"result"`
+		Error  json.RawMessage `json:"error"`
+		Id     string          `json:"id"`
+	}
+	if err = json.Unmarshal(buf, &info); err != nil {
+		return
+	}
+	if info.Error != nil && string(info.Error) != "null" {
+		err = errors.New(string(info.Error))
+		return
+	}
+	if info.Id != strconv.FormatInt(id, 10) {
+		err = errors.New("wrong response data")
+		return
+	}
+	trr := &btcjson.TxRawResult{}
+	if err = json.Unmarshal(info.Result, &trr); err != nil {
+		return
+	}
+	var amount decimal.Decimal
+	for index, out := range trr.Vout {
+		switch out.ScriptPubKey.Type {
+		case txscript.NonStandardTy.String(): // None of the recognized forms.
+			continue
+		case txscript.NullDataTy.String(): // Empty data-only (provably prunable).
+			continue
+		case txscript.MultiSigTy.String(): // Multi signature.
+			continue
+		case txscript.PubKeyTy.String(): // Pay pubkey.
+		default:
+		}
+		if amount = decimal.NewFromFloat(out.Value); !amount.IsPositive() {
+			continue
+		}
+		tx := &TransactionRecord{
+			TokenFlag: b.Symbol(),
+			Index:     uint64(index),
+			LogIndex:  0,
+			From:      "",
+			To:        out.ScriptPubKey.Addresses[0],
+			Value:     amount,
+			BlockHash: blkHash,
+			TxHash:    txHash,
+		}
+		txs = append(txs, tx)
+	}
+	return
+}
+
 func (b *BitcoinCore) TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error) {
 	if from > to {
 		err = errors.New("params error")
@@ -203,7 +269,7 @@ func (b *BitcoinCore) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error
 			case txscript.MultiSigTy: // Multi signature.
 				continue
 			case txscript.PubKeyTy: // Pay pubkey.
-				if addr, err = btcutil.NewAddressPubKey(out.PkScript[1:34], &chaincfg.TestNet3Params); err != nil {
+				if addr, err = btcutil.NewAddressPubKey(out.PkScript[1:34], b.net); err != nil {
 					return
 				}
 			default:

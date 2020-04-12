@@ -27,6 +27,7 @@ type CryptoCurrency interface {
 	BlockByHash(blkHash string) (bi interface{}, err error)
 
 	//transaction
+	Transaction(txHash, blkHash string) (txs []*TransactionRecord, isPending bool, err error)
 	TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error)
 	MakeTransaction([]*TxFrom, []*TxTo, interface{}) (txSigned interface{}, err error)
 	SendTransaction(txSigned interface{}) (txHash string, err error)

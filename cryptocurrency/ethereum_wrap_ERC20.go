@@ -116,6 +116,24 @@ func (et *EthToken) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, er
 }
 
 //transaction
+func (et *EthToken) Transaction(txHash, blkHash string) (txs []*TransactionRecord, isPending bool, err error) {
+	b, err := et.c.BlockByHash(et.ctx, common.HexToHash(blkHash))
+	if err != nil {
+		return
+	}
+	tmp, err := et.TransactionsInBlocks(b.NumberU64(), b.NumberU64())
+	if err != nil {
+		return
+	}
+	for _, v := range tmp {
+		if v.TxHash != txHash {
+			continue
+		}
+		txs = append(txs, v)
+	}
+	return
+}
+
 func (et *EthToken) TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error) {
 	if from > to {
 		err = errors.New("params error")

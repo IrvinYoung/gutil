@@ -84,21 +84,21 @@ type BtcComTxOutput struct {
 }
 
 type BtcComTransaction struct {
-	BlockHeight  int64          `json:"block_height"` // block_height: int 所在块高度
-	BlockTime    int64          `json:"block_time"`   // block_time: int 所在块时间
-	CreatedAt    int64          `json:"created_at"`   // created_at: int 该记录系统处理时间，没有业务含义
-	Fee          int64          `json:"fee"`          // fee: int 该交易的手续费
-	Hash         string         `json:"hash"`         // hash: string 交易哈希
+	BlockHeight  int64             `json:"block_height"` // block_height: int 所在块高度
+	BlockTime    int64             `json:"block_time"`   // block_time: int 所在块时间
+	CreatedAt    int64             `json:"created_at"`   // created_at: int 该记录系统处理时间，没有业务含义
+	Fee          int64             `json:"fee"`          // fee: int 该交易的手续费
+	Hash         string            `json:"hash"`         // hash: string 交易哈希
 	Inputs       []*BtcComTxInput  `json:"inputs"`
-	InputsCount  int64          `json:"inputs_count"` // inputs_count: int 输入数量
-	InputsValue  int64          `json:"inputs_value"` // inputs_value: int 输入金额
-	IsCoinbase   bool           `json:"is_coinbase"`  // is_coinbase: boolean 是否为 coinbase 交易
-	LockTime     int64          `json:"lock_time"`    // lock_time: int lock time
+	InputsCount  int64             `json:"inputs_count"` // inputs_count: int 输入数量
+	InputsValue  int64             `json:"inputs_value"` // inputs_value: int 输入金额
+	IsCoinbase   bool              `json:"is_coinbase"`  // is_coinbase: boolean 是否为 coinbase 交易
+	LockTime     int64             `json:"lock_time"`    // lock_time: int lock time
 	Outputs      []*BtcComTxOutput `json:"outputs"`
-	OutputsCount int64          `josn:"outputs_count"` // outputs_count: int 输出数量
-	OutputsValue int64          `json:"outputs_value"` // outputs_value: int 输出金额
-	Size         int64          `json:"size"`          // size: int 交易体积
-	Version      int64          `json:"version"`       // version: int 交易版本号
+	OutputsCount int64             `josn:"outputs_count"` // outputs_count: int 输出数量
+	OutputsValue int64             `json:"outputs_value"` // outputs_value: int 输出金额
+	Size         int64             `json:"size"`          // size: int 交易体积
+	Version      int64             `json:"version"`       // version: int 交易版本号
 	//others data from response
 	BlockHash     string `json:"block_hash"`
 	Confirmations int64  `json:"confirmations"`
@@ -111,9 +111,9 @@ type BtcComTransaction struct {
 }
 
 type BtcComTxPage struct {
-	TotalCount int64             `json:"total_count"`
-	Page       int64             `json:"page"`
-	PageSize   int64             `json:"pagesize"`
+	TotalCount int64                `json:"total_count"`
+	Page       int64                `json:"page"`
+	PageSize   int64                `json:"pagesize"`
 	Txs        []*BtcComTransaction `json:"list"`
 }
 
@@ -179,6 +179,69 @@ func (b *BitcoinBtcCom) BlockByHash(blkHash string) (bi interface{}, err error) 
 }
 
 //transaction
+func (b *BitcoinBtcCom) Transaction(txHash, blkHash string) (txs []*TransactionRecord, isPending bool, err error) {
+	//https://chain.api.btc.com/v3/tx/0eab89a271380b09987bcee5258fca91f28df4dadcedf892658b9bc261050d96?verbose=3
+	bt := &BtcComTransaction{}
+	if err = b.requestGet(fmt.Sprintf("/tx/%s?verbose=3", txHash), bt); err != nil {
+		return
+	}
+	var (
+		buf    []byte
+		amount decimal.Decimal
+		awph *btcutil.AddressWitnessPubKeyHash
+		awsh *btcutil.AddressWitnessScriptHash
+	)
+	for index, o := range bt.Outputs { //each output
+		if o.PayType == "NULL_DATA" {
+			//log.Printf("txid=%s to=%v, value=%d type=%s\n", v.Hash, o.Addresses, o.Value, o.PayType)
+			continue //skip NULL_DATA
+		}
+		if o.PayType == "P2PKH_MULTISIG" {
+			//log.Printf("txid=%s to=%v, value=%d type=%s\n", v.Hash, o.Addresses, o.Value, o.PayType)
+			continue // skip P2PKH_MULTISIG
+		}
+		if len(o.Addresses) > 1 {
+			//log.Printf("txid=%s to=%v, value=%d type=%s\n", v.Hash, o.Addresses, o.Value, o.PayType)
+			continue //skip multi sign
+		}
+		//log.Printf("txid=%s to=%v, value=%d type=%s\n", v.Hash, o.Addresses, o.Value, o.PayType)
+		if amount, err = ToBtc(o.Value); err != nil {
+			//log.Printf("transfer amount failed, txid=%s, o_index=%d\n", v.Hash, index)
+			continue
+		}
+		tx := &TransactionRecord{
+			TokenFlag:   b.Symbol(),
+			Index:       uint64(index),
+			Value:       amount,
+			To:          o.Addresses[0],
+			BlockHash:   blkHash,
+			TxHash:      txHash,
+			BlockNumber: uint64(bt.BlockHeight),
+			TimeStamp:   bt.BlockTime,
+		}
+		if strings.HasPrefix(o.PayType, "P2WPKH") {
+			if buf, err = hex.DecodeString(tx.To); err != nil {
+				continue
+			}
+			if awph, err = btcutil.NewAddressWitnessPubKeyHash(buf, b.net); err != nil {
+				continue
+			}
+			tx.To = awph.EncodeAddress()
+		}
+		if strings.HasPrefix(o.PayType, "P2WSH") {
+			if buf, err = hex.DecodeString(tx.To); err != nil {
+				continue
+			}
+			if awsh, err = btcutil.NewAddressWitnessScriptHash(buf, b.net); err != nil {
+				continue
+			}
+			tx.To = awsh.EncodeAddress()
+		}
+		txs = append(txs, tx)
+	}
+	return
+}
+
 func (b *BitcoinBtcCom) TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error) {
 	if from > to {
 		err = errors.New("params error")

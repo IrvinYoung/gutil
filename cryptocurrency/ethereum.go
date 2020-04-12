@@ -153,6 +153,51 @@ func (e *Ethereum) BlockByHash(blkHash string) (bi interface{}, err error) {
 }
 
 //transaction
+func (e *Ethereum) Transaction(txHash, blkHash string) (txs []*TransactionRecord, isPending bool, err error) {
+	b, err := e.c.BlockByHash(e.ctx, common.HexToHash(blkHash))
+	if err != nil {
+		return
+	}
+	var (
+		msg    types.Message
+		amount decimal.Decimal
+		h      = common.HexToHash(txHash)
+	)
+	for k, v := range b.Transactions() {
+		if v.Hash() != h {
+			continue
+		}
+		if msg, err = v.AsMessage(types.NewEIP155Signer(e.chainID)); err != nil {
+			//log.Println("get tx msg failed,", v.Hash().Hex(), err)
+			continue
+		}
+		if amount, err = ToDecimal(v.Value(), e.Decimal()); err != nil {
+			//log.Println("get tx value failed,", v.Hash().Hex(), err)
+			continue
+		}
+		tx := &TransactionRecord{
+			TokenFlag:   e.Symbol(),
+			Index:       uint64(k),
+			From:        msg.From().Hex(),
+			Value:       amount,
+			BlockHash:   b.Hash().Hex(),
+			TxHash:      v.Hash().Hex(),
+			BlockNumber: b.NumberU64(),
+			TimeStamp:   int64(b.Time()),
+			Data:        v.Data(),
+		}
+		if msg.To() != nil {
+			tx.To = msg.To().Hex()
+		} else {
+			tx.To = "" //new contract
+		}
+		txs = append(txs, tx)
+		//log.Printf("%d\t%s : %s -> %s %s\n",
+		//	k, tx.TxHash, tx.From, tx.To, tx.Value.String())
+	}
+	return
+}
+
 func (e *Ethereum) TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error) {
 	if from > to {
 		err = errors.New("params error")
@@ -180,7 +225,6 @@ func (e *Ethereum) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error) {
 		amount decimal.Decimal
 	)
 	for k, v := range b.Transactions() {
-		//todo: maybe some transaction is invalid
 		if msg, err = v.AsMessage(types.NewEIP155Signer(e.chainID)); err != nil {
 			log.Println("get tx msg failed,", v.Hash().Hex(), err)
 			continue
@@ -198,6 +242,7 @@ func (e *Ethereum) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error) {
 			TxHash:      v.Hash().Hex(),
 			BlockNumber: b.NumberU64(),
 			TimeStamp:   int64(b.Time()),
+			Data:        v.Data(),
 		}
 		if msg.To() != nil {
 			tx.To = msg.To().Hex()

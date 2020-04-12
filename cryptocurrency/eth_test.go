@@ -357,6 +357,7 @@ func TestERC20TokenTransaction(t *testing.T) {
 		t.Log("from-->", fAddr, b)
 	}
 	tAddr := "0xfcdE17BA66F8EA6084a37AA04FD888d4Fd9a3847"
+	//tAddr := "0x1B49AC04074F4f3513197Eaa1D6e4fBeea8b7f51"
 	b, err = cc.BalanceOf(tAddr, 0)
 	if err != nil {
 		t.Fatal(err)
@@ -431,4 +432,49 @@ func TestERC20TokenTransaction(t *testing.T) {
 		t.Log("to-->", tAddr, b)
 	}
 	return
+}
+
+func TestGetTransaction(t *testing.T) {
+	//init client
+	host := "http://127.0.0.1:7545"
+	var err error
+	e := &Ethereum{Host: host}
+	if err = e.Init(); err != nil {
+		t.Fatal("init ethereum failed,", err)
+	}
+	defer e.Close()
+
+	tx, isPending, err := e.Transaction("0x4e00243c7e763d85bed3291467bc24c8474f9f3757475282daa3e4dab065af1a",
+		"0x11f8d385ebf47b9844bcb9c9db5b09b4bfebcb18e88393da0789ffdcab8c707e")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("is pending=%v tx=%+v\b", isPending, tx)
+}
+
+func TestGetTokenTransaction(t *testing.T) {
+	//init client
+	host := "http://127.0.0.1:7545"
+	var err error
+	e := &Ethereum{Host: host}
+	if err = e.Init(); err != nil {
+		t.Fatal("init ethereum failed,", err)
+	}
+	defer e.Close()
+
+	contractAddress := "0x6aa0cfdEFFefDd4968Cf550f9160D78AF9afd65F"
+	token, err := e.TokenInstance(contractAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	txs, isPending, err := token.Transaction("0x689fb8fc0c318c252b9b696b399f1886df3f56e7d5698bd5007f6ae8f75feb5d",
+		"0x3f3a4138e9898e254938d6b9e34ca44b74ffa42d274187dd41ae913c5f8653d9")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("is pending=", isPending)
+	for k, v := range txs {
+		t.Logf("\t%d -> tx=%+v\n", k, v)
+	}
 }
