@@ -116,7 +116,7 @@ func (et *EthToken) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, er
 }
 
 //transaction
-func (et *EthToken) Transaction(txHash, blkHash string) (txs []*TransactionRecord, isPending bool, err error) {
+func (et *EthToken) Transaction(txHash, blkHash string) (txs []*TransactionRecord, err error) {
 	b, err := et.c.BlockByHash(et.ctx, common.HexToHash(blkHash))
 	if err != nil {
 		return

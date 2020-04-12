@@ -121,7 +121,7 @@ func (b *BitcoinCore) BlockByHash(blkHash string) (bi interface{}, err error) {
 }
 
 //transaction
-func (b *BitcoinCore) Transaction(txHash, blkHash string) (txs []*TransactionRecord, isPending bool, err error) {
+func (b *BitcoinCore) Transaction(txHash, blkHash string) (txs []*TransactionRecord, err error) {
 	rand.Seed(time.Now().UnixNano())
 	id := rand.Int63()
 	query := fmt.Sprintf(`{"jsonrpc":"1.0","id":"%d","method":"getrawtransaction","params":["%s",true,"%s"]}`,

@@ -243,12 +243,11 @@ func TestGetTxByBtcCom(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	txs, isPending, err := cc.Transaction("a0417c6c3fdb0d969fe0648c3dc761f541ab92f3405cf195a0612330b714e461",
+	txs, err := cc.Transaction("a0417c6c3fdb0d969fe0648c3dc761f541ab92f3405cf195a0612330b714e461",
 		"000000000000000000124c0502c5f20d3a48ce906b98e5455d4d9ff74ebfd547")
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("is pending=",isPending)
 	for k, v := range txs {
 		t.Logf("\t%d -> tx=%+v\n", k, v)
 	}
@@ -263,12 +262,11 @@ func TestGetTxByRPC(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	txs, isPending, err := cc.Transaction("56f87210814c8baef7068454e517a70da2f2103fc3ac7f687e32a228dc80e115",
+	txs, err := cc.Transaction("56f87210814c8baef7068454e517a70da2f2103fc3ac7f687e32a228dc80e115",
 		"00000000000008c4e99525336570ce0817625cb9b9d73ddab5579c32dbb96fb8")
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("is pending=",isPending)
 	for k, v := range txs {
 		t.Logf("\t%d -> tx=%+v\n", k, v)
 	}

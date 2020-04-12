@@ -179,7 +179,7 @@ func (b *BitcoinBtcCom) BlockByHash(blkHash string) (bi interface{}, err error) 
 }
 
 //transaction
-func (b *BitcoinBtcCom) Transaction(txHash, blkHash string) (txs []*TransactionRecord, isPending bool, err error) {
+func (b *BitcoinBtcCom) Transaction(txHash, blkHash string) (txs []*TransactionRecord, err error) {
 	//https://chain.api.btc.com/v3/tx/0eab89a271380b09987bcee5258fca91f28df4dadcedf892658b9bc261050d96?verbose=3
 	bt := &BtcComTransaction{}
 	if err = b.requestGet(fmt.Sprintf("/tx/%s?verbose=3", txHash), bt); err != nil {

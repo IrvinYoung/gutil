@@ -153,7 +153,7 @@ func (e *Ethereum) BlockByHash(blkHash string) (bi interface{}, err error) {
 }
 
 //transaction
-func (e *Ethereum) Transaction(txHash, blkHash string) (txs []*TransactionRecord, isPending bool, err error) {
+func (e *Ethereum) Transaction(txHash, blkHash string) (txs []*TransactionRecord, err error) {
 	b, err := e.c.BlockByHash(e.ctx, common.HexToHash(blkHash))
 	if err != nil {
 		return
