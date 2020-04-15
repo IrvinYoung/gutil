@@ -497,11 +497,38 @@ func TestDecodeEthTx(t *testing.T) {
 	}
 	defer e.Close()
 
-	f, to,txhash, err := e.DecodeRawTransaction("0xf86e048504a817c8008252089456d7ec6e9359eafb2a66d32072ecfb574fe240bc880f43fc2c04ee000080822d46a0ce0d0fe6f0814b04345f6106c0c0e93f969496a33b541e3633de4fcdc7c5d5aea02f808df575b952ea3fc6fd8bbc893436daec733b87f1eda08a2d6a13f65b72a6")
+	f, to, txhash, err := e.DecodeRawTransaction("0xf86e048504a817c8008252089456d7ec6e9359eafb2a66d32072ecfb574fe240bc880f43fc2c04ee000080822d46a0ce0d0fe6f0814b04345f6106c0c0e93f969496a33b541e3633de4fcdc7c5d5aea02f808df575b952ea3fc6fd8bbc893436daec733b87f1eda08a2d6a13f65b72a6")
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("%+v\n",txhash)
+	t.Logf("%+v\n", txhash)
+	t.Logf("%+v\n", f[0])
+	t.Logf("%+v\n", to[0])
+}
+
+func TestDecodeEthTokenTx(t *testing.T) {
+	//init client
+	host := "http://127.0.0.1:7545"
+	var err error
+	e := &Ethereum{Host: host}
+	if err = e.Init(); err != nil {
+		t.Fatal("init ethereum failed,", err)
+	}
+	defer e.Close()
+	et, err := e.TokenInstance("0x6aa0cfdEFFefDd4968Cf550f9160D78AF9afd65F")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	//transfer
+	txData := "0xf8ab478504a817c800828fb4946aa0cfdeffefdd4968cf550f9160d78af9afd65f80b844a9059cbb000000000000000000000000abe3716570020dc0734a6ffba2e8ebd4042c9db200000000000000000000000000000000000000000000000000038d7ea4c68000822d45a0b1a237027739866a15a04f911c39761e5bcc28e3f6a8644477f41a0d18330f9aa03c71b17a7b7dac23f64e90040585902ceb36b234ab75a373d7faa4e6c2a7f3b4"
+	//transfer from
+	//txData := "0xf8cb488504a817c80082ac62946aa0cfdeffefdd4968cf550f9160d78af9afd65f80b86423b872dd000000000000000000000000abe3716570020dc0734a6ffba2e8ebd4042c9db2000000000000000000000000fcde17ba66f8ea6084a37aa04fd888d4fd9a3847000000000000000000000000000000000000000000000000001c6bf526340000822d45a05c463fab1b6554cc016d292467d9dbaff3405ce0ef7a7fe02d58c493d79a47c0a009a83e6a4dd7e4ad644440900c6da16385e1f1a65119a325235e9aa49d6c881b"
+	f, to, txhash, err := et.DecodeRawTransaction(txData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%+v\n", txhash)
 	t.Logf("%+v\n", f[0])
 	t.Logf("%+v\n", to[0])
 }

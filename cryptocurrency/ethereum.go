@@ -19,6 +19,7 @@ import (
 	"math/big"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 type Ethereum struct {
@@ -491,5 +492,15 @@ func ToWei(iamount interface{}, decimals int64) (amount *big.Int, err error) {
 		return
 	}
 	amount = d.Coefficient()
+	return
+}
+
+func HexToDecimal(d []byte, decimals int64) (amount decimal.Decimal, err error) {
+	str := "0x" + strings.TrimLeft(common.Bytes2Hex(d), "0")
+	value, err := hexutil.DecodeBig(str)
+	if err != nil {
+		return
+	}
+	amount, err = ToDecimal(value.String(), decimals)
 	return
 }

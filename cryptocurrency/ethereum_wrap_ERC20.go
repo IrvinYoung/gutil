@@ -4,8 +4,10 @@ import (
 	"errors"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/rlp"
 	"log"
 	"math/big"
 	"strings"
@@ -116,6 +118,78 @@ func (et *EthToken) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, er
 }
 
 //transaction
+func (et *EthToken) DecodeRawTransaction(txData string) (from []*TxFrom, to []*TxTo, txHash string, err error) {
+	data, err := hexutil.Decode(txData)
+	if err != nil {
+		return
+	}
+	tx := &types.Transaction{}
+	if err = rlp.DecodeBytes(data, &tx); err != nil {
+		return
+	}
+	parsed, err := abi.JSON(strings.NewReader(ERC20.ERC20ABI))
+	if err != nil {
+		return
+	}
+	method, err := parsed.MethodById(tx.Data())
+	if err != nil {
+		return
+	}
+	cdata := tx.Data()[4:]
+	var (
+		amount decimal.Decimal
+		msg    types.Message
+	)
+	switch method.Name {
+	case "transfer":
+		if len(cdata) != 64 {
+			err = errors.New("invalid ERC20 transfer data length")
+		}
+		//from
+		if msg, err = tx.AsMessage(types.NewEIP155Signer(et.chainID)); err != nil {
+			return
+		}
+		from = []*TxFrom{
+			&TxFrom{
+				From: msg.From().Hex(),
+			},
+		}
+		//to
+		if amount, err = HexToDecimal(cdata[32:], et.Decimal()); err != nil {
+			return
+		}
+		to = []*TxTo{
+			&TxTo{
+				To:    common.BytesToAddress(cdata[:32]).Hex(),
+				Value: amount,
+			},
+		}
+	case "transferFrom":
+		if len(cdata) != 96 {
+			err = errors.New("invalid ERC20 transfer data length")
+		}
+		//from
+		from = []*TxFrom{
+			&TxFrom{
+				From: common.BytesToAddress(cdata[:32]).Hex(),
+			},
+		}
+		//to
+		if amount, err = HexToDecimal(cdata[64:], et.Decimal()); err != nil {
+			return
+		}
+		to = []*TxTo{
+			&TxTo{
+				To:    common.BytesToAddress(cdata[32:64]).Hex(),
+				Value: amount,
+			},
+		}
+	}
+
+	txHash = tx.Hash().Hex()
+	return
+}
+
 func (et *EthToken) Transaction(txHash, blkHash string) (txs []*TransactionRecord, err error) {
 	b, err := et.c.BlockByHash(et.ctx, common.HexToHash(blkHash))
 	if err != nil {
