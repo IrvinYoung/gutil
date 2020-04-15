@@ -6,6 +6,18 @@ import (
 	"testing"
 )
 
+func TestBtcAccount(t *testing.T){
+	var cc CryptoCurrency
+	cc, err := InitBitcoinClient("https://chain.api.btc.com/v3", true, &chaincfg.MainNetParams)
+	if err != nil {
+		t.Fatal(err)
+	}
+	a := "0x131231231"
+	t.Logf("%s check=%v\n", a, cc.IsValidAccount(a))
+	b := "17A16QmavnUfCW11DAApiJxp7ARnxN5pGX"
+	t.Logf("%s check=%v\n", b, cc.IsValidAccount(b))
+}
+
 func TestCryptoCurrencyBitcoin(t *testing.T) {
 	var (
 		cc  CryptoCurrency

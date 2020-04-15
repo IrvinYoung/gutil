@@ -188,8 +188,8 @@ func (b *BitcoinBtcCom) Transaction(txHash, blkHash string) (txs []*TransactionR
 	var (
 		buf    []byte
 		amount decimal.Decimal
-		awph *btcutil.AddressWitnessPubKeyHash
-		awsh *btcutil.AddressWitnessScriptHash
+		awph   *btcutil.AddressWitnessPubKeyHash
+		awsh   *btcutil.AddressWitnessScriptHash
 	)
 	for index, o := range bt.Outputs { //each output
 		if o.PayType == "NULL_DATA" {
@@ -258,15 +258,14 @@ func (b *BitcoinBtcCom) TransactionsInBlocks(from, to uint64) (txs []*Transactio
 	return
 }
 
-func (b *BitcoinBtcCom) SendTransaction(txSigned interface{}) (txHash string, err error) {
+func (b *BitcoinBtcCom) SendTransaction(txSigned interface{}) (txHash string, txData string, err error) {
 	// https://chain.api.btc.com/v3/tools/tx-publish
 	tx := txSigned.(*btcutil.Tx)
-	txStr, err := btcMsgToHex(tx.MsgTx())
-	if err != nil {
+	if txData, err = btcMsgToHex(tx.MsgTx()); err != nil {
 		return
 	}
 	var bpi BtcComPublishInfo
-	if err = b.requestPost("/tools/tx-publish", txStr, &bpi); err != nil {
+	if err = b.requestPost("/tools/tx-publish", txData, &bpi); err != nil {
 		return
 	}
 	txHash = bpi.Txid

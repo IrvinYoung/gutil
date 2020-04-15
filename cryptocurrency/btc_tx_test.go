@@ -179,11 +179,12 @@ func TestPublishTx(t *testing.T) {
 		t.Fatal(err)
 	}
 	//publish it
-	txHash, err := cc.SendTransaction(txSign)
+	txHash, txData, err := cc.SendTransaction(txSign)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("txid=", txHash)
+	t.Log("txData=", txData)
 }
 
 func TestEstimateFee(t *testing.T) {

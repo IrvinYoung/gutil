@@ -7,6 +7,15 @@ import (
 	"testing"
 )
 
+func TestEthAccount(t *testing.T) {
+	var cc CryptoCurrency
+	cc = &Ethereum{}
+	a := "0x131231231"
+	t.Logf("%s check=%v\n", a, cc.IsValidAccount(a))
+	b := "0x53E11118300f77E8AA6a81FD658e27c5a0d88C77"
+	t.Logf("%s check=%v\n", b, cc.IsValidAccount(b))
+}
+
 func TestCryptoCurrencyEthereum(t *testing.T) {
 	var cc CryptoCurrency
 	cc = &Ethereum{}
@@ -106,11 +115,11 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	tx, err := token.ApproveAgent(owner, agent)
 	remain, _ := token.Allowance(owner.From, agent.To)
 	t.Logf("before approve=%s\n", remain.String())
-	txHash, err := token.SendTransaction(tx)
+	txHash, txData, err := token.SendTransaction(tx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("new token approve tx=", txHash)
+	t.Log("new token approve tx=", txHash, txData)
 	remain, _ = token.Allowance(owner.From, agent.To)
 	t.Logf("after approve=%s\n", remain.String())
 
@@ -133,12 +142,12 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 	}
 	tokenBalance, _ := token.BalanceOf("0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2", 0)
 	t.Logf("before token balance=%s\n", tokenBalance.String())
-	txHash, err = token.SendTransaction(tx)
+	txHash, txData, err = token.SendTransaction(tx)
 	if err != nil {
 		t.Fatal(err)
 	}
 	tokenBalance, _ = token.BalanceOf("0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2", 0)
-	t.Log("new token approve tx=", txHash)
+	t.Log("new token approve tx=", txHash, txData)
 	t.Logf("after token balance=%s\n", tokenBalance.String())
 	remain, _ = token.Allowance(owner.From, agent.To)
 	t.Logf("after approve=%s\n", remain.String())
@@ -246,11 +255,11 @@ func TestMakeEthTx(t *testing.T) {
 	t.Logf("txid=%s\n", tx.(*types.Transaction).Hash().Hex())
 
 	//send eth raw transaction
-	txHash, err := cc.SendTransaction(tx)
+	txHash, txData, err := cc.SendTransaction(tx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("new eth tx=", txHash)
+	t.Log("new eth tx=", txHash, txData)
 
 	//token fee
 	contractAddress := "0x6aa0cfdEFFefDd4968Cf550f9160D78AF9afd65F"
@@ -302,11 +311,11 @@ func TestMakeEthTx(t *testing.T) {
 	t.Logf("token txid=%s\n", tx.(*types.Transaction).Hash().Hex())
 
 	//send token raw transaction
-	txHash, err = token.SendTransaction(tx)
+	txHash, txData, err = token.SendTransaction(tx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("new token tx=", txHash)
+	t.Log("new token tx=", txHash, txData)
 	tokenBalance, _ = token.BalanceOf("0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", 0)
 	t.Logf("after: from - token balance %s %s\n", "0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", tokenBalance)
 	tokenBalance, _ = token.BalanceOf("0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2", 0)
@@ -377,11 +386,11 @@ func TestERC20TokenTransaction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	txid, err := cc.SendTransaction(tx)
+	txid, txData, err := cc.SendTransaction(tx)
 	if err != nil {
 		t.Fatal(err)
 	} else {
-		t.Log("approve txid=", txid)
+		t.Log("approve txid=", txid, txData)
 	}
 	//get allowance
 	remain, err := cc.Allowance(fAddr, agent)
@@ -406,10 +415,10 @@ func TestERC20TokenTransaction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if txid, err = cc.SendTransaction(tx); err != nil {
+	if txid, txData, err = cc.SendTransaction(tx); err != nil {
 		t.Fatal(err)
 	} else {
-		t.Log("token txid=", txid)
+		t.Log("token txid=", txid, txData)
 	}
 
 	//balance

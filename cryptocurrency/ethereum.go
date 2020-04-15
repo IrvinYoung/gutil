@@ -2,6 +2,7 @@ package cryptocurrency
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"github.com/IrvinYoung/gutil/cryptocurrency/ERC20"
@@ -11,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/shopspring/decimal"
 	"log"
@@ -84,7 +86,8 @@ func (e *Ethereum) AllocAccount(password, salt string, params interface{}) (addr
 	}
 	//private key
 	privateKeyData := crypto.FromECDSA(privateKeyECDSA)
-	priv = hexutil.Encode(privateKeyData)
+	//priv = hexutil.Encode(privateKeyData)
+	priv = hex.EncodeToString(privateKeyData) //without "0x"
 	//address
 	address := crypto.PubkeyToAddress(privateKeyECDSA.PublicKey)
 	addr = address.String()
@@ -318,8 +321,13 @@ func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo, params interface{
 	return
 }
 
-func (e *Ethereum) SendTransaction(tx interface{}) (txHash string, err error) {
+func (e *Ethereum) SendTransaction(tx interface{}) (txHash string, txData string, err error) {
 	signedTx := tx.(*types.Transaction)
+	data, err := rlp.EncodeToBytes(signedTx)
+	if err != nil {
+		return
+	}
+	txData = hexutil.Encode(data)
 	if err = e.c.SendTransaction(e.ctx, signedTx); err != nil {
 		return
 	}

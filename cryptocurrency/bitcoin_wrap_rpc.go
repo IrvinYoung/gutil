@@ -202,11 +202,14 @@ func (b *BitcoinCore) TransactionsInBlocks(from, to uint64) (txs []*TransactionR
 	return
 }
 
-func (b *BitcoinCore) SendTransaction(txSigned interface{}) (txHash string, err error) {
+func (b *BitcoinCore) SendTransaction(txSigned interface{}) (txHash string, txData string, err error) {
 	if b.cli == nil {
 		err = errors.New("client is invalid")
 	}
 	tx := txSigned.(*btcutil.Tx)
+	if txData, err = btcMsgToHex(tx.MsgTx()); err != nil {
+		return
+	}
 	h, err := b.cli.SendRawTransaction(tx.MsgTx(), false)
 	if err != nil {
 		return
