@@ -335,6 +335,38 @@ func (e *Ethereum) SendTransaction(tx interface{}) (txHash string, txData string
 	return
 }
 
+func (e *Ethereum) DecodeRawTransaction(txData string) (from []*TxFrom, to []*TxTo, txHash string, err error) {
+	data, err := hexutil.Decode(txData)
+	if err != nil {
+		return
+	}
+	tx := &types.Transaction{}
+	if err = rlp.DecodeBytes(data, &tx); err != nil {
+		return
+	}
+	msg, err := tx.AsMessage(types.NewEIP155Signer(e.chainID))
+	if err != nil {
+		return
+	}
+	amount, err := ToDecimal(msg.Value().String(), e.Decimal())
+	if err != nil {
+		return
+	}
+	from = []*TxFrom{
+		&TxFrom{
+			From: msg.From().Hex(),
+		},
+	}
+	to = []*TxTo{
+		&TxTo{
+			To:    msg.To().Hex(),
+			Value: amount,
+		},
+	}
+	txHash = tx.Hash().Hex()
+	return
+}
+
 func (e *Ethereum) MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo) (txSigned interface{}, err error) {
 	err = errors.New("not support")
 	return

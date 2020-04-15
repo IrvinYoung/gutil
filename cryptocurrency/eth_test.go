@@ -486,3 +486,22 @@ func TestGetTokenTransaction(t *testing.T) {
 		t.Logf("\t%d -> tx=%+v\n", k, v)
 	}
 }
+
+func TestDecodeEthTx(t *testing.T) {
+	//init client
+	host := "http://127.0.0.1:7545"
+	var err error
+	e := &Ethereum{Host: host}
+	if err = e.Init(); err != nil {
+		t.Fatal("init ethereum failed,", err)
+	}
+	defer e.Close()
+
+	f, to,txhash, err := e.DecodeRawTransaction("0xf86e048504a817c8008252089456d7ec6e9359eafb2a66d32072ecfb574fe240bc880f43fc2c04ee000080822d46a0ce0d0fe6f0814b04345f6106c0c0e93f969496a33b541e3633de4fcdc7c5d5aea02f808df575b952ea3fc6fd8bbc893436daec733b87f1eda08a2d6a13f65b72a6")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%+v\n",txhash)
+	t.Logf("%+v\n", f[0])
+	t.Logf("%+v\n", to[0])
+}
