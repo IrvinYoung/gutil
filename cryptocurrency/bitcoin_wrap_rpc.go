@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/btcsuite/btcd/btcjson"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
@@ -265,11 +264,7 @@ func (b *BitcoinCore) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error
 			}
 			pkType = txscript.GetScriptClass(out.PkScript)
 			switch pkType {
-			case txscript.NonStandardTy: // None of the recognized forms.
-				continue
-			case txscript.NullDataTy: // Empty data-only (provably prunable).
-				continue
-			case txscript.MultiSigTy: // Multi signature.
+			case txscript.NonStandardTy, txscript.NullDataTy, txscript.MultiSigTy: // None of the recognized forms.
 				continue
 			case txscript.PubKeyTy: // Pay pubkey.
 				if addr, err = btcutil.NewAddressPubKey(out.PkScript[1:34], b.net); err != nil {
@@ -283,7 +278,7 @@ func (b *BitcoinCore) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error
 				if pkScript, err = txscript.ParsePkScript(out.PkScript); err != nil {
 					return
 				}
-				if addr, err = pkScript.Address(&chaincfg.TestNet3Params); err != nil {
+				if addr, err = pkScript.Address(b.net); err != nil {
 					return
 				}
 			}

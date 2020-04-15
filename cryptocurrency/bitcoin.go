@@ -48,9 +48,9 @@ func InitBitcoinClient(host string, isAddrCompress bool, defaultNet *chaincfg.Pa
 	}
 	//todo: support blockchain.com
 	if strings.Contains(host, "btc.com") {
-		cc, err = InitBitcoinBtcComClient(b)	//btc.com
-	}else{
-		cc, err = InitBitcoinCoreRpcClient(b)	//wallet RPC
+		cc, err = InitBitcoinBtcComClient(b) //btc.com
+	} else {
+		cc, err = InitBitcoinCoreRpcClient(b) //wallet RPC
 	}
 	return
 }
@@ -141,6 +141,61 @@ func (b *Bitcoin) IsValidAccount(addr string) bool {
 }
 
 //transaction
+func (b *Bitcoin) DecodeRawTransaction(txData string) (from []*TxFrom, to []*TxTo, txHash string, err error) {
+	data, err := hex.DecodeString(txData)
+	if err != nil {
+		return
+	}
+	buf := bytes.NewBuffer(data)
+	msg := &wire.MsgTx{}
+	if err = msg.BtcDecode(buf, wire.ProtocolVersion, wire.WitnessEncoding); err != nil {
+		return
+	}
+	txHash = msg.TxHash().String()
+	//from
+	from = make([]*TxFrom, 0)
+	for _, v := range msg.TxIn {
+		from = append(from, &TxFrom{
+			From:   "",
+			TxHash: v.PreviousOutPoint.Hash.String(),
+			Index:  uint64(v.PreviousOutPoint.Index),
+		})
+	}
+	//to
+	to = make([]*TxTo, 0)
+	var (
+		amount      decimal.Decimal
+		pkScript    txscript.PkScript
+		scriptClass txscript.ScriptClass
+		addr        btcutil.Address
+	)
+	for _, v := range msg.TxOut {
+		if amount, err = ToBtc(v.Value); err != nil {
+			return
+		}
+		scriptClass = txscript.GetScriptClass(v.PkScript)
+		switch scriptClass {
+		case txscript.NonStandardTy, txscript.MultiSigTy, txscript.NullDataTy:
+			continue
+		case txscript.PubKeyTy:
+			if addr, err = btcutil.NewAddressPubKey(v.PkScript[1:34], b.net); err != nil {
+				return
+			}
+		default:
+			if pkScript, err = txscript.ParsePkScript(v.PkScript); err != nil {
+				return
+			}
+			if addr, err = pkScript.Address(b.net); err != nil {
+				return
+			}
+		}
+		to = append(to, &TxTo{
+			To:    addr.EncodeAddress(),
+			Value: amount,
+		})
+	}
+	return
+}
 func (b *Bitcoin) MakeTransaction(from []*TxFrom, to []*TxTo, params interface{}) (txSigned interface{}, err error) {
 	if from == nil || len(from) == 0 || to == nil || len(to) == 0 {
 		err = errors.New("params error")
@@ -503,7 +558,7 @@ func spendWitnessKeyHash(txIn *wire.TxIn, pkScript []byte,
 
 func btcMsgToHex(msg wire.Message) (string, error) {
 	var buf bytes.Buffer
-	if err := msg.BtcEncode(&buf, 70002, wire.WitnessEncoding); err != nil {
+	if err := msg.BtcEncode(&buf, wire.ProtocolVersion, wire.LatestEncoding); err != nil {
 		context := fmt.Sprintf("Failed to encode msg of type %T", msg)
 		return "", errors.New(context)
 	}
