@@ -504,8 +504,8 @@ func (et *EthToken) Allowance(owner, agent string) (remain decimal.Decimal, err 
 	return
 }
 
-func (et *EthToken) EstimateFee(from []*TxFrom, to []*TxTo, d interface{}) (fee decimal.Decimal, limit uint64, err error) {
-	if len(from) != 1 || len(to) != 1 {
+func (et *EthToken) EstimateFee(from []*TxFrom, to []*TxTo, params interface{}) (fee decimal.Decimal, limit uint64, err error) {
+	if len(from) != 1 || len(to) != 1 || params == nil {
 		err = errors.New("params error")
 		return
 	}
@@ -513,6 +513,24 @@ func (et *EthToken) EstimateFee(from []*TxFrom, to []*TxTo, d interface{}) (fee 
 		err = errors.New("address is invalid")
 		return
 	}
+	switch params.(type) {
+	case string:
+	default:
+		err = errors.New("params should be string")
+		return
+	}
+	switch params.(string) {
+	case "transfer":
+		fee, limit, err = et.estimateTransferFee(from, to)
+	case "transferFrom":
+		fee, limit, err = et.estimateTransferFromFee(from, to)
+	default:
+		err = errors.New("params should be transfer/transferFrom")
+	}
+	return
+}
+
+func (et *EthToken) estimateTransferFee(from []*TxFrom, to []*TxTo) (fee decimal.Decimal, limit uint64, err error) {
 	amount, err := ToWei(to[0].Value, et.Decimal())
 	if err != nil {
 		return
@@ -541,6 +559,41 @@ func (et *EthToken) EstimateFee(from []*TxFrom, to []*TxTo, d interface{}) (fee 
 		return
 	}
 	fee = decimal.NewFromBigInt(price, 0).Mul(decimal.NewFromInt(int64(limit)))
+	fee, err = ToDecimal(fee, 18)
+	return
+}
+
+func (et *EthToken) estimateTransferFromFee(from []*TxFrom, to []*TxTo) (fee decimal.Decimal, limit uint64, err error) {
+	amount, err := ToWei(to[0].Value, et.Decimal())
+	if err != nil {
+		return
+	}
+	parsed, err := abi.JSON(strings.NewReader(ERC20.ERC20ABI))
+	if err != nil {
+		return
+	}
+	addrTo := common.HexToAddress(to[0].To)
+	addrFrom := common.HexToAddress(from[0].From)
+	data, err := parsed.Pack("transferFrom", addrFrom, addrTo, amount)
+	if err != nil {
+		return
+	}
+	gasPrice, err := et.c.SuggestGasPrice(et.ctx)
+	if err != nil {
+		return
+	}
+	addrToken := common.HexToAddress(et.Contract)
+	msg := ethereum.CallMsg{
+		From:     addrFrom,	//-> agent address
+		To:       &addrToken,
+		GasPrice: gasPrice,
+		Value:    nil,
+		Data:     data,
+	}
+	if limit, err = et.c.EstimateGas(et.ctx, msg); err != nil {
+		return
+	}
+	fee = decimal.NewFromBigInt(gasPrice, 0).Mul(decimal.NewFromInt(int64(limit)))
 	fee, err = ToDecimal(fee, 18)
 	return
 }
