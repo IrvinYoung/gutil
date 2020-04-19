@@ -368,7 +368,7 @@ func (e *Ethereum) DecodeRawTransaction(txData string) (from []*TxFrom, to []*Tx
 	return
 }
 
-func (e *Ethereum) MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo) (txSigned interface{}, err error) {
+func (e *Ethereum) MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo,params interface{}) (txSigned interface{}, err error) {
 	err = errors.New("not support")
 	return
 }

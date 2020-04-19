@@ -32,7 +32,7 @@ type CryptoCurrency interface {
 	DecodeRawTransaction(txData string) (from []*TxFrom, to []*TxTo, txHash string, err error)
 	MakeTransaction([]*TxFrom, []*TxTo, interface{}) (txSigned interface{}, err error)
 	SendTransaction(txSigned interface{}) (txHash, txData string, err error)
-	MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo) (txSigned interface{}, err error)
+	MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo,params interface{}) (txSigned interface{}, err error)
 	ApproveAgent(*TxFrom, *TxTo) (txSigned interface{}, err error)
 	Allowance(owner, agent string) (remain decimal.Decimal, err error)
 	EstimateFee([]*TxFrom, []*TxTo, interface{}) (decimal.Decimal, uint64, error)

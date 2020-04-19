@@ -288,7 +288,7 @@ func (b *Bitcoin) MakeTransaction(from []*TxFrom, to []*TxTo, params interface{}
 	tx := btcutil.NewTx(mtx)
 	return tx, nil
 }
-func (b *Bitcoin) MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo) (txSigned interface{}, err error) {
+func (b *Bitcoin) MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo, params interface{}) (txSigned interface{}, err error) {
 	err = errors.New("not support")
 	return
 }

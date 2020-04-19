@@ -136,7 +136,7 @@ func TestCryptoCurrencyEthereum(t *testing.T) {
 			Value: decimal.New(1, 3),
 		},
 	}
-	tx, err = token.MakeAgentTransaction("0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", from, to)
+	tx, err = token.MakeAgentTransaction("0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1", from, to,6244)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -206,7 +206,7 @@ func TestEstimateEthFee(t *testing.T) {
 			Value: decimal.New(1, -3),
 		},
 	}
-	fee, gasLimit, err = token.EstimateFee(from, to, nil)
+	fee, gasLimit, err = token.EstimateFee(from, to, "transferFrom")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -411,7 +411,7 @@ func TestERC20TokenTransaction(t *testing.T) {
 			&TxTo{
 				To:    tAddr,
 				Value: decimal.New(8, -3),
-			}})
+			}},6244)
 	if err != nil {
 		t.Fatal(err)
 	}
