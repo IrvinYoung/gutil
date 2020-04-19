@@ -341,7 +341,7 @@ func (et *EthToken) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err
 func (et *EthToken) IsToken() bool { return true }
 
 func (et *EthToken) MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo, params interface{}) (txSigned interface{}, err error) {
-	if len(from) != 1 || len(to) != 1 || params == nil {
+	if from == "" || len(agent) != 1 || len(to) != 1 || params == nil {
 		err = errors.New("params error")
 		return
 	}
@@ -354,7 +354,7 @@ func (et *EthToken) MakeAgentTransaction(from string, agent []*TxFrom, to []*TxT
 		return
 	}
 	if !et.IsValidAccount(from) {
-		err = errors.New("address is invalid")
+		err = errors.New("from address is invalid")
 		return
 	}
 	if !et.IsValidAccount(agent[0].From) || !et.IsValidAccount(to[0].To) {
