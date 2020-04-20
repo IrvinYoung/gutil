@@ -196,17 +196,16 @@ func TestEstimateEthFee(t *testing.T) {
 	defer token.(*EthToken).Close()
 	from = []*TxFrom{
 		&TxFrom{
-			From:       "0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1",
-			PrivateKey: "c821b8cdfe1b7dd195ffb00d17245f945ab893253ee846d987e362658a92585c",
+			From:       "0x1B49AC04074F4f3513197Eaa1D6e4fBeea8b7f51",
 		},
 	}
 	to = []*TxTo{
 		&TxTo{
-			To:    "0xAbe3716570020Dc0734a6ffbA2e8EBd4042C9Db2",
-			Value: decimal.New(1, -3),
+			To:    "0xc056b439F3cC83F7631Fd9fa791B1523dadEc2a1",
+			Value: decimal.New(10, -3),
 		},
 	}
-	fee, gasLimit, err = token.EstimateFee(from, to, "transferFrom")
+	fee, gasLimit, err = token.EstimateFee(from, to, "0x1B489011a53200bB4d78a04980b5bA2e6af563a5")
 	if err != nil {
 		t.Fatal(err)
 	}
