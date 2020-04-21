@@ -294,7 +294,7 @@ func (b *BitcoinBtcCom) EstimateFee(from []*TxFrom, to []*TxTo, params interface
 		msg = txSign.(*btcutil.Tx).MsgTx()
 		buf bytes.Buffer
 	)
-	if err = msg.BtcEncode(&buf, 70002, wire.WitnessEncoding); err != nil {
+	if err = msg.BtcEncode(&buf, wire.ProtocolVersion, wire.WitnessEncoding); err != nil {
 		return
 	}
 	txSize = uint64(buf.Len())
