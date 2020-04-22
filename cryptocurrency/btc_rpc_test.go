@@ -81,3 +81,18 @@ func TestCryptoCurrencyBitcoinBtcCom(t *testing.T) {
 		t.Logf("txid=%s to=%s index=%d amount=%s\n", v.TxHash, v.To, v.Index, v.Value.String())
 	}
 }
+
+func TestGetBtcTx(t *testing.T) {
+	cc, err := InitBitcoinClient("myusername:12345678@192.168.1.11:8332", true, &chaincfg.TestNet3Params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(cc.CoinName(), cc.Symbol(), cc.Decimal())
+	txs, err := cc.TransactionsInBlocks(1697341, 1697341)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tx := range txs {
+		t.Log(tx.To)
+	}
+}

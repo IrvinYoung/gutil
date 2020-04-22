@@ -259,9 +259,6 @@ func (b *BitcoinCore) getBlkTxs(blk uint64) (txs []*TransactionRecord, err error
 	blkInfo := bi.(*wire.MsgBlock)
 	for _, v := range blkInfo.Transactions {
 		for index, out := range v.TxOut {
-			if out.PkScript[0] == txscript.OP_RETURN {
-				continue
-			}
 			pkType = txscript.GetScriptClass(out.PkScript)
 			switch pkType {
 			case txscript.NonStandardTy, txscript.NullDataTy, txscript.MultiSigTy: // None of the recognized forms.
