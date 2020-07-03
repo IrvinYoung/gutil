@@ -35,7 +35,7 @@ if err != nil {
 
 ```
 
-## Using custome instance 
+## Using custom instance 
 
 ```go
 import "github.com/IrvinYoung/gutil/aut"

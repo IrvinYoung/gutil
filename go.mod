@@ -6,7 +6,6 @@ require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.60.296
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/btcsuite/btcutil v1.0.1
-	github.com/btcsuite/btcwallet v0.11.0 // indirect
 	github.com/btcsuite/btcwallet/wallet/txauthor v1.0.0
 	github.com/casbin/casbin/v2 v2.1.2
 	github.com/dchest/captcha v0.0.0-20170622155422-6a29415a8364
@@ -15,7 +14,8 @@ require (
 	github.com/go-redis/redis v6.15.6+incompatible
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114
+	go.uber.org/zap v1.15.0
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
-	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	xorm.io/xorm v0.8.0
 )
