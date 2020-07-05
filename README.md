@@ -35,7 +35,12 @@
   
     > [gomail](https://github.com/go-gomail/gomail)
 
+## Log
+*日志*
 
+- [Implemented by zap]()
+  
+    > [zap](https://github.com/uber-go/zap)
 
 ## cryptocurrency
 *加密数字货币开发库*
