@@ -1,34 +1,36 @@
 package log
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/go-redis/redis"
+	"github.com/streadway/amqp"
 	"go.uber.org/zap"
 	"net/url"
 	"strconv"
 	"strings"
 )
 
-type ZapSkinRedisQueue struct {
+type ZapSinkRedisQueue struct {
 	cli      *redis.Client
 	queue    string
 	fromLeft bool
 }
 
-func (s ZapSkinRedisQueue) Sync() error {
+func (s ZapSinkRedisQueue) Sync() error {
 	//s.cli.Sync()	//not implemented
 	return nil
 }
 
-func (s ZapSkinRedisQueue) Close() error {
+func (s ZapSinkRedisQueue) Close() error {
 	if s.cli == nil {
 		return nil
 	}
 	return s.cli.Close()
 }
 
-func (s ZapSkinRedisQueue) Write(p []byte) (n int, err error) {
+func (s ZapSinkRedisQueue) Write(p []byte) (n int, err error) {
 	if s.fromLeft {
 		err = s.cli.LPush(s.queue, string(p)).Err()
 	} else {
@@ -37,13 +39,13 @@ func (s ZapSkinRedisQueue) Write(p []byte) (n int, err error) {
 	return len(p), err
 }
 
-func NewZapSkinRedisQueue(url *url.URL) (sink zap.Sink, err error) {
+func NewZapSinkRedisQueue(url *url.URL) (sink zap.Sink, err error) {
 	if url.Host == "" {
 		err = errors.New("lost redis host")
 		return
 	}
 
-	s := ZapSkinRedisQueue{}
+	s := ZapSinkRedisQueue{}
 	query := url.Query()
 	s.queue = strings.ToLower(query.Get("queue"))
 	if s.queue == "" {
@@ -83,11 +85,121 @@ func NewZapSkinRedisQueue(url *url.URL) (sink zap.Sink, err error) {
 	return s, err
 }
 
-type ZapSkinRabbitMQ struct {
+type ZapSinkRabbitMQ struct {
+	con       *amqp.Connection
+	ch        *amqp.Channel
+	errorChan chan *amqp.Error
+
+	levelKey     string
+	exchangeName string
 }
 
-type ZapSkinMongo struct {
+func (s ZapSinkRabbitMQ) Sync() error {
+	return nil
 }
 
-type ZapSkinXorm struct {
+func (s ZapSinkRabbitMQ) Close() error {
+	return s.closePublisher()
 }
+
+func (s ZapSinkRabbitMQ) closePublisher() error {
+	if s.con == nil || s.con.IsClosed() {
+		return nil
+	}
+	return s.con.Close()
+}
+
+func (s ZapSinkRabbitMQ) Write(p []byte) (n int, err error) {
+	//不科学
+	var m map[string]interface{}
+	if err = json.Unmarshal(p, &m); err != nil {
+		return
+	}
+	key, has := m[s.levelKey]
+	if !has {
+		err = errors.New("log lost level key")
+		return
+	}
+	if key == nil || key.(string) == "" {
+		err = errors.New("invalid log level key")
+		return
+	}
+	err = s.ch.Publish(
+		s.exchangeName, // exchange
+		key.(string),   // routing key
+		false,          // mandatory
+		false,          // immediate
+		amqp.Publishing{
+			ContentEncoding: "utf8",
+			ContentType:     "application/json",
+			Body:            p,
+		})
+	return len(p), nil
+}
+
+func NewZapSinkRabbitMQ(url *url.URL) (Sink zap.Sink, err error) {
+	s := &ZapSinkRabbitMQ{}
+	s.exchangeName = url.Query().Get("exchange")
+	if s.exchangeName == "" {
+		err = errors.New("lost exchange name")
+		return
+	}
+	s.levelKey = url.Query().Get("key")
+	if s.levelKey == "" {
+		err = errors.New("lost log level key name")
+		return
+	}
+
+	s.errorChan = make(chan *amqp.Error, 1)
+	if s.con, err = amqp.Dial(url.String()); err != nil {
+		return
+	}
+	s.con.NotifyClose(s.errorChan)
+	if s.ch, err = s.con.Channel(); err != nil {
+		s.closePublisher()
+		return
+	}
+	err = s.ch.ExchangeDeclare(
+		s.exchangeName,      // name
+		amqp.ExchangeDirect, // type
+		true,                // durable
+		false,               // auto-deleted
+		false,               // internal
+		false,               // no-wait
+		nil,                 // arguments
+	)
+	if err != nil {
+		s.closePublisher()
+		return
+	}
+	return s, nil
+}
+
+type ZapSinkMongo struct {
+}
+
+func (s ZapSinkMongo) Sync() error { return nil }
+
+func (s ZapSinkMongo) Close() error { return nil }
+
+func (s ZapSinkMongo) Write(p []byte) (n int, err error) {
+	println("mongo->", string(p))
+	return len(p), nil
+}
+
+func NewZapSinkMongo(url *url.URL) (sink zap.Sink, err error) {
+	println(url.String())
+	s := &ZapSinkMongo{}
+	return s, nil
+}
+
+type ZapSinkXorm struct {
+}
+
+func (s ZapSinkXorm) Sync() error { return nil }
+
+func (s ZapSinkXorm) Close() error { return nil }
+
+func (s ZapSinkXorm) Write(p []byte) (n int, err error) { return }
+
+func NewZapSinkXorm(url *url.URL) (sink zap.Sink, err error) { return }
