@@ -247,14 +247,3 @@ func NewZapSinkMongo(url *url.URL) (sink zap.Sink, err error) {
 
 	return s, nil
 }
-
-type ZapSinkXorm struct {
-}
-
-func (s ZapSinkXorm) Sync() error { return nil }
-
-func (s ZapSinkXorm) Close() error { return nil }
-
-func (s ZapSinkXorm) Write(p []byte) (n int, err error) { return }
-
-func NewZapSinkXorm(url *url.URL) (sink zap.Sink, err error) { return }
