@@ -103,7 +103,7 @@ func TestZapSinkRabbitMQ(t *testing.T) {
 }
 
 func TestZapSinkMongo(t *testing.T) {
-	err := zap.RegisterSink("mongo", NewZapSinkMongo)
+	err := zap.RegisterSink("mongodb", NewZapSinkMongo)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -130,10 +130,11 @@ func TestZapSinkMongo(t *testing.T) {
 			EncodeName:     zapcore.FullNameEncoder,
 		},
 		OutputPaths: []string{"stdout",
-			"mongo://127.0.0.1:5672/test?password=we@19112"},
+			"mongodb://test:test@127.0.0.1:27017/test?collection=log"},
 		ErrorOutputPaths: []string{"stderr"},
 		InitialFields: map[string]interface{}{
 			"test": "amqp",
+			"more": []string{"1", "2", "3"},
 		},
 	}
 

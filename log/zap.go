@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/globalsign/mgo"
 	"github.com/go-redis/redis"
 	"github.com/streadway/amqp"
 	"go.uber.org/zap"
@@ -36,7 +37,12 @@ func (s ZapSinkRedisQueue) Write(p []byte) (n int, err error) {
 	} else {
 		err = s.cli.RPush(s.queue, string(p)).Err()
 	}
-	return len(p), err
+	if err != nil {
+		n = 0
+	} else {
+		n = len(p)
+	}
+	return
 }
 
 func NewZapSinkRedisQueue(url *url.URL) (sink zap.Sink, err error) {
@@ -113,15 +119,16 @@ func (s ZapSinkRabbitMQ) Write(p []byte) (n int, err error) {
 	//不科学
 	var m map[string]interface{}
 	if err = json.Unmarshal(p, &m); err != nil {
+		n = 0
 		return
 	}
 	key, has := m[s.levelKey]
 	if !has {
-		err = errors.New("log lost level key")
+		n, err = 0, errors.New("log lost level key")
 		return
 	}
 	if key == nil || key.(string) == "" {
-		err = errors.New("invalid log level key")
+		n, err = 0, errors.New("invalid log level key")
 		return
 	}
 	err = s.ch.Publish(
@@ -134,7 +141,12 @@ func (s ZapSinkRabbitMQ) Write(p []byte) (n int, err error) {
 			ContentType:     "application/json",
 			Body:            p,
 		})
-	return len(p), nil
+	if err != nil {
+		n = 0
+	} else {
+		n = len(p)
+	}
+	return
 }
 
 func NewZapSinkRabbitMQ(url *url.URL) (Sink zap.Sink, err error) {
@@ -176,20 +188,63 @@ func NewZapSinkRabbitMQ(url *url.URL) (Sink zap.Sink, err error) {
 }
 
 type ZapSinkMongo struct {
+	collection string
+	db         string
+	eng        *mgo.Session
+	clc        *mgo.Collection
 }
 
-func (s ZapSinkMongo) Sync() error { return nil }
+func (s ZapSinkMongo) Sync() error {
+	return s.eng.Fsync(true)
+}
 
-func (s ZapSinkMongo) Close() error { return nil }
+func (s ZapSinkMongo) Close() error {
+	if s.eng == nil {
+		return nil
+	}
+	s.eng.Close()
+	return nil
+}
 
 func (s ZapSinkMongo) Write(p []byte) (n int, err error) {
-	println("mongo->", string(p))
-	return len(p), nil
+	var m map[string]interface{}
+	if err = json.Unmarshal(p, &m); err != nil {
+		n = 0
+		return
+	}
+	if err = s.clc.Insert(m); err != nil {
+		n = 0
+	} else {
+		n = len(p)
+	}
+	return
 }
 
 func NewZapSinkMongo(url *url.URL) (sink zap.Sink, err error) {
-	println(url.String())
+	tmp := strings.Split(url.String(), "?")
+	if len(tmp) != 2 {
+		err = errors.New("invalid mongodb link")
+		return
+	}
+	dsn := tmp[0]
 	s := &ZapSinkMongo{}
+	//[mongodb://][user:pass@]host1[:port1][,host2[:port2],...][/database][?options]
+	s.collection = url.Query().Get("collection")
+	if s.collection == "" {
+		err = errors.New("lost mongodb collection")
+		return
+	}
+	s.db = strings.Trim(url.Path, "/")
+	if s.db == "" {
+		err = errors.New("invalid mongodb db")
+		return
+	}
+
+	if s.eng, err = mgo.Dial(dsn); err != nil {
+		return
+	}
+	s.clc = s.eng.DB(s.db).C(s.collection)
+
 	return s, nil
 }
 

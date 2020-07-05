@@ -11,6 +11,7 @@ require (
 	github.com/dchest/captcha v0.0.0-20170622155422-6a29415a8364
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/ethereum/go-ethereum v1.9.11
+	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/go-redis/redis v6.15.6+incompatible
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114
