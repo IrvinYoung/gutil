@@ -1,8 +1,8 @@
 package ds
 
 //Result response data, using for restful API
-type Result struct{
-	Ok bool	`json:"ok"`
-	Error string	`json:"error"`
+type Result struct {
+	Code int64       `json:"code"`
+	Msg  string      `json:"msg"`
 	Data interface{} `json:"data"`
 }
