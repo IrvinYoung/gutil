@@ -40,3 +40,13 @@ func checkPriv2Addr(privKey, addr string) (err error) {
 	}
 	return
 }
+
+func TestBalance(t *testing.T) {
+	trx := &Tron{Host: "https://api.trongrid.io"}
+	addr := "TMhDGbyPn17fraYfvMjH58Zrfaix2ZCxz3"
+	b, err := trx.BalanceOf(addr, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("balance of", addr, b.String())
+}

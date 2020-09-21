@@ -1,19 +1,27 @@
 package cryptocurrency
 
 import (
-	"context"
+	"bytes"
 	"encoding/hex"
+	"encoding/json"
+	"errors"
 	"github.com/IrvinYoung/gutil/cryptocurrency/tron_lib"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/shopspring/decimal"
+	"io/ioutil"
+	"net/http"
 )
 
 type Tron struct {
-	ctx     context.Context
-	//c       *ethclient.Client
 	//t       *ERC20.ERC20
 	//chainID *big.Int
 
 	Host string
+}
+
+func InitTronClient(host string) (t *Tron, err error) {
+	t = &Tron{Host: host}
+	return
 }
 
 //basic
@@ -65,3 +73,48 @@ func (t *Tron) IsValidAccount(addr string) bool {
 	return true
 }
 
+func (t *Tron) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, err error) {
+	if !t.IsValidAccount(addr) {
+		err = errors.New("address is invalid")
+		return
+	}
+	data, err := t.requestPost("/walletsolidity/getaccount", map[string]interface{}{
+		"address": addr,
+		"visible": true,
+	})
+	if err != nil {
+		return
+	}
+	var a tron_lib.AccountInfoData
+	if err = json.Unmarshal(data, &a); err != nil {
+		return
+	}
+	b = decimal.New(a.Balance,int32(0-t.Decimal()))
+	return
+}
+
+//internal
+func (t *Tron) requestGet(url string, d interface{}) (data json.RawMessage, err error) {
+	resp, err := http.Get(t.Host + url)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	data, err = ioutil.ReadAll(resp.Body)
+	return
+}
+
+func (t *Tron) requestPost(url string, d interface{}) (data json.RawMessage, err error) {
+	buf, err := json.Marshal(d)
+	if err != nil {
+		return
+	}
+	r := bytes.NewReader(buf)
+	resp, err := http.Post(t.Host+url, "application/json", r)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	data, err = ioutil.ReadAll(resp.Body)
+	return
+}
