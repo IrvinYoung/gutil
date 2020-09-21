@@ -50,3 +50,13 @@ func TestBalance(t *testing.T) {
 	}
 	t.Log("balance of", addr, b.String())
 }
+
+func TestBlock(t *testing.T) {
+	trx := &Tron{Host: "https://api.trongrid.io"}
+
+	b, err := trx.LastBlockNumber()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("last blk=", b)
+}

@@ -89,7 +89,21 @@ func (t *Tron) BalanceOf(addr string, blkNum uint64) (b decimal.Decimal, err err
 	if err = json.Unmarshal(data, &a); err != nil {
 		return
 	}
-	b = decimal.New(a.Balance,int32(0-t.Decimal()))
+	b = decimal.New(a.Balance, int32(0-t.Decimal()))
+	return
+}
+
+//block
+func (t *Tron) LastBlockNumber() (blkNum uint64, err error) {
+	data, err := t.requestGet("/wallet/getnowblock", nil)
+	if err != nil {
+		return
+	}
+	var b tron_lib.BlockData
+	if err = json.Unmarshal(data, &b); err != nil {
+		return
+	}
+	blkNum = uint64(b.BlockHeader.RawData.Number)
 	return
 }
 
