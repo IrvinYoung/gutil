@@ -59,4 +59,10 @@ func TestBlock(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("last blk=", b)
+
+	bi, err := trx.BlockByNumber(23468545)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("last blk=%+v\n", bi)
 }
