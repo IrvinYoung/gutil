@@ -14,6 +14,7 @@ require (
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/go-redis/redis v6.15.6+incompatible
 	github.com/go-sql-driver/mysql v1.4.1
+	github.com/shengdoushi/base58 v1.0.0
 	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114
 	github.com/streadway/amqp v1.0.0
 	go.uber.org/zap v1.15.0
