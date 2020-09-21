@@ -73,6 +73,7 @@ type TransactionRecord struct {
 const (
 	ChainBTC = "bitcoin"
 	ChainETH = "ethereum"
+	ChainTRX = "tron"
 )
 
 func PasswordCheck(pwd, salt string) (err error) {
