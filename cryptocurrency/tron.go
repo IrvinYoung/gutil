@@ -51,3 +51,17 @@ func (t *Tron) AllocAccount(password, salt string, params interface{}) (addr, pr
 	return
 }
 
+func (t *Tron) IsValidAccount(addr string) bool {
+	if len(addr) != 34 {
+		return false
+	}
+	if addr[0:1] != "T" {
+		return false
+	}
+	_, err := tron_lib.DecodeCheck(addr)
+	if err != nil {
+		return false
+	}
+	return true
+}
+

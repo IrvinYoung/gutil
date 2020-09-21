@@ -18,4 +18,7 @@ func TestAccount(t *testing.T) {
 	t.Log("addr=", a)
 	t.Log("priv=", p)
 	t.Log("err=", e)
+
+	is := trx.IsValidAccount(a)
+	t.Log(a, "check result=", is)
 }
