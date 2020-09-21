@@ -1,6 +1,11 @@
 package cryptocurrency
 
-import "testing"
+import (
+	"errors"
+	"github.com/IrvinYoung/gutil/cryptocurrency/tron_lib"
+	"github.com/ethereum/go-ethereum/crypto"
+	"testing"
+)
 
 func TestBasic(t *testing.T) {
 	trx := &Tron{}
@@ -21,4 +26,17 @@ func TestAccount(t *testing.T) {
 
 	is := trx.IsValidAccount(a)
 	t.Log(a, "check result=", is)
+}
+
+func checkPriv2Addr(privKey, addr string) (err error) {
+	priv, err := crypto.HexToECDSA(privKey)
+	if err != nil {
+		return
+	}
+	a := tron_lib.EncodeCheck(tron_lib.PubkeyToAddressBytes(priv.PublicKey).Bytes())
+	if a != addr {
+		err = errors.New("private key do not match address")
+		return
+	}
+	return
 }

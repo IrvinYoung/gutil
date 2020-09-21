@@ -8,6 +8,10 @@ import (
 	"github.com/shengdoushi/base58"
 )
 
+const AddressLength = 21
+
+type Address [AddressLength]byte
+
 var tronAlphabet = base58.NewAlphabet("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz")
 
 func Encode(input []byte) string {
@@ -64,8 +68,25 @@ func DecodeCheck(input string) ([]byte, error) {
 	return nil, fmt.Errorf("addres hash not check ok")
 }
 
-func PubkeyToAddressBytes(p ecdsa.PublicKey) []byte {
+func PubkeyToAddressBytes(p ecdsa.PublicKey) Address {
 	address := crypto.PubkeyToAddress(p)
 	addressTron := append([]byte{0x41}, address.Bytes()...)
-	return addressTron
+	return BytesToAddress(addressTron)
+}
+
+func BytesToAddress(b []byte) Address {
+	var a Address
+	a.SetBytes(b)
+	return a
+}
+
+func (a Address) Bytes() []byte {
+	return a[:]
+}
+
+func (a *Address) SetBytes(b []byte) {
+	if len(b) > len(a) {
+		b = b[len(b)-AddressLength:]
+	}
+	copy(a[AddressLength-len(b):], b)
 }

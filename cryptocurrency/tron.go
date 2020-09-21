@@ -45,7 +45,7 @@ func (t *Tron) AllocAccount(password, salt string, params interface{}) (addr, pr
 	priv = hex.EncodeToString(privateKeyData) //without "0x"
 	println(priv)
 	//address
-	addr = tron_lib.EncodeCheck(tron_lib.PubkeyToAddressBytes(privateKeyECDSA.PublicKey))
+	addr = tron_lib.EncodeCheck(tron_lib.PubkeyToAddressBytes(privateKeyECDSA.PublicKey).Bytes())
 	//encrypt private key
 	priv, err = encryptPrivKey(password, salt, priv)
 	return
