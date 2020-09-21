@@ -122,6 +122,21 @@ func (t *Tron) BlockByNumber(blkNum uint64) (bi interface{}, err error) {
 	return
 }
 
+func (t *Tron) BlockByHash(blkHash string) (bi interface{}, err error) {
+	data, err := t.requestPost("/wallet/getblockbyid", map[string]interface{}{
+		"value": blkHash,
+	})
+	if err != nil {
+		return
+	}
+	var b tron_lib.BlockData
+	if err = json.Unmarshal(data, &b); err != nil {
+		return
+	}
+	bi = b
+	return
+}
+
 //internal
 func (t *Tron) requestGet(url string, d interface{}) (data json.RawMessage, err error) {
 	resp, err := http.Get(t.Host + url)

@@ -64,5 +64,11 @@ func TestBlock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("last blk=%+v\n", bi)
+	t.Logf("blk=%+v\n", bi)
+
+	bi, err = trx.BlockByHash("0000000001661a018734c0c1ef3f1fabd01dedfc01219e5b3110fbe8757c9b5e")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("blk=%+v\n", bi)
 }
