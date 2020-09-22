@@ -48,8 +48,11 @@ type ContractParameterData struct {
 }
 
 type ContractParameterValueData struct {
+	Amount          int64  `json:"amount"`
+	AssetName       string `json:"asset_name"`
 	Data            string `json:"data"`
 	OwnerAddress    string `json:"owner_address"`
+	ToAddress       string `json:"to_address"`
 	ContractAddress string `json:"contract_address"`
 	CallValue       int64  `json:"call_value"`
 }

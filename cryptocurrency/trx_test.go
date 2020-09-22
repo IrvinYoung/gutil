@@ -72,3 +72,14 @@ func TestBlock(t *testing.T) {
 	}
 	t.Logf("blk=%+v\n", bi)
 }
+
+func TestTransaction(t *testing.T) {
+	trx := &Tron{Host: "https://api.trongrid.io"}
+
+	//txs, err := trx.Transaction("ade3abbe97afdbc145a6622437dfde346ede59dd0a09ddfc03b0805acd233c4b", "")
+	txs, err := trx.Transaction("5eccfb8ac1d300b0a5e3a3c8784e813a1eaebae54d8ea3de881b34653cade629", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%+v\n", txs)
+}

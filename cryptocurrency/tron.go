@@ -24,6 +24,17 @@ func InitTronClient(host string) (t *Tron, err error) {
 	return
 }
 
+func (t *Tron) IsToken() bool {
+	return false
+}
+
+func (t *Tron) Close() {
+}
+
+func (t *Tron) TotalSupply() decimal.Decimal {
+	return decimal.Zero
+}
+
 //basic
 func (t *Tron) CoinName() string {
 	return "Tron"
@@ -134,6 +145,70 @@ func (t *Tron) BlockByHash(blkHash string) (bi interface{}, err error) {
 		return
 	}
 	bi = b
+	return
+}
+
+//transaction
+func (t *Tron) Transaction(txHash, blkHash string) (txs []*TransactionRecord, err error) {
+	//todo: not implement
+	return
+	data, err := t.requestPost("/wallet/gettransactionbyid", map[string]interface{}{
+		"value":   txHash,
+		"visible": true,
+	})
+	if err != nil {
+		return
+	}
+	var tx tron_lib.TransactionData
+	if err = json.Unmarshal(data, &tx); err != nil {
+		return
+	}
+	return
+}
+
+func (t *Tron) TransactionsInBlocks(from, to uint64) (txs []*TransactionRecord, err error) {
+	//todo: not implement
+	return
+}
+
+func (t *Tron) MakeTransaction(from []*TxFrom, to []*TxTo, params interface{}) (txSigned interface{}, err error) {
+	//todo: not implement
+	return
+}
+
+func (t *Tron) SendTransaction(tx interface{}) (txHash string, txData string, err error) {
+	//todo: not implement
+	return
+}
+
+func (t *Tron) DecodeRawTransaction(txData string) (from []*TxFrom, to []*TxTo, txHash string, err error) {
+	//todo: not implement
+	return
+}
+
+func (t *Tron) MakeAgentTransaction(from string, agent []*TxFrom, to []*TxTo, params interface{}) (txSigned interface{}, err error) {
+	err = errors.New("not support")
+	return
+}
+
+func (t *Tron) ApproveAgent(owner *TxFrom, agent *TxTo) (txSigned interface{}, err error) {
+	err = errors.New("not support")
+	return
+}
+
+func (t *Tron) Allowance(owner, agent string) (remain decimal.Decimal, err error) {
+	err = errors.New("not support")
+	return
+}
+
+func (t *Tron) EstimateFee(from []*TxFrom, to []*TxTo, d interface{}) (fee decimal.Decimal, limit uint64, err error) {
+	//todo: not implement
+	return
+}
+
+//token
+func (t *Tron) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err error) {
+	//todo: not implement
 	return
 }
 
