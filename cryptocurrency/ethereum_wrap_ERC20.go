@@ -493,6 +493,38 @@ func (et *EthToken) ApproveAgent(owner *TxFrom, agent *TxTo) (txSigned interface
 	return
 }
 
+func (et *EthToken) ApproveFee(owner, addrAgent, value string) (fee decimal.Decimal, err error) {
+	amount, err := ToWei(value, et.Decimal())
+	if err != nil {
+		return
+	}
+	addrOwner := common.HexToAddress(owner)
+	//2. gas price
+	gasPrice, err := et.c.SuggestGasPrice(et.ctx)
+	if err != nil {
+		return
+	}
+	//3. gas limit
+	parsed, err := abi.JSON(strings.NewReader(ERC20.ERC20ABI))
+	if err != nil {
+		return
+	}
+	data, err := parsed.Pack("approve", addrAgent, amount)
+	if err != nil {
+		return
+	}
+	addrToken := common.HexToAddress(et.Contract)
+	msg := ethereum.CallMsg{From: addrOwner, To: &addrToken, GasPrice: gasPrice, Value: nil, Data: data}
+	gasLimit, err := et.c.EstimateGas(et.ctx, msg)
+	if err != nil {
+		return
+	}
+	//4. check eth balance
+	feeInt := new(big.Int).Mul(gasPrice, big.NewInt(int64(gasLimit)))
+	fee = decimal.NewFromBigInt(feeInt, 0)
+	return
+}
+
 func (et *EthToken) Allowance(owner, agent string) (remain decimal.Decimal, err error) {
 	if !et.IsValidAccount(owner) || !et.IsValidAccount(agent) {
 		err = errors.New("address is invalid")
