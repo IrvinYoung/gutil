@@ -458,6 +458,8 @@ func (et *EthToken) ApproveAgent(owner *TxFrom, agent *TxTo) (txSigned interface
 	if err != nil {
 		return
 	}
+	println("net price=", gasPrice.String(), "set to:", 100000000000)
+	gasPrice = big.NewInt(100000000000)
 	//3. gas limit
 	parsed, err := abi.JSON(strings.NewReader(ERC20.ERC20ABI))
 	if err != nil {
@@ -505,7 +507,8 @@ func (et *EthToken) ApproveFee(owner, agent, value string) (fee decimal.Decimal,
 	if err != nil {
 		return
 	}
-	println(gasPrice.String())
+	println("net price=", gasPrice.String(), "set to:", 100000000000)
+	gasPrice = big.NewInt(100000000000)
 	//3. gas limit
 	parsed, err := abi.JSON(strings.NewReader(ERC20.ERC20ABI))
 	if err != nil {
