@@ -442,6 +442,32 @@ func (e *Ethereum) TokenInstance(tokenInfo interface{}) (cc CryptoCurrency, err 
 	return
 }
 
+func (e *Ethereum) GetTokenInstance(tokenInfo interface{}) (token *EthToken, err error) {
+	var addr string
+	switch tokenInfo.(type) {
+	case string:
+		addr = tokenInfo.(string)
+	default:
+		err = errors.New("need contract address")
+		return
+	}
+	if !e.IsValidAccount(addr) {
+		err = errors.New("contract address is invalid")
+		return
+	}
+
+	nec, err := InitEthereumClient(e.Host)
+	if err != nil {
+		return
+	}
+	token = &EthToken{
+		Ethereum: nec,
+		Contract: addr,
+	}
+	token.token, err = ERC20.NewERC20(common.HexToAddress(addr), nec.c)
+	return
+}
+
 func ToDecimal(ivalue interface{}, decimals int64) (d decimal.Decimal, err error) {
 	var value string
 	switch v := ivalue.(type) {
