@@ -505,6 +505,7 @@ func (et *EthToken) ApproveFee(owner, agent, value string) (fee decimal.Decimal,
 	if err != nil {
 		return
 	}
+	println(gasPrice.String())
 	//3. gas limit
 	parsed, err := abi.JSON(strings.NewReader(ERC20.ERC20ABI))
 	if err != nil {
