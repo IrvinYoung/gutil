@@ -493,12 +493,13 @@ func (et *EthToken) ApproveAgent(owner *TxFrom, agent *TxTo) (txSigned interface
 	return
 }
 
-func (et *EthToken) ApproveFee(owner, addrAgent, value string) (fee decimal.Decimal, err error) {
+func (et *EthToken) ApproveFee(owner,agent, value string) (fee decimal.Decimal, err error) {
 	amount, err := ToWei(value, et.Decimal())
 	if err != nil {
 		return
 	}
 	addrOwner := common.HexToAddress(owner)
+	addrAgent := common.HexToAddress(agent)
 	//2. gas price
 	gasPrice, err := et.c.SuggestGasPrice(et.ctx)
 	if err != nil {
