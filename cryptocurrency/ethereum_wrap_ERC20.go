@@ -522,7 +522,6 @@ func (et *EthToken) ApproveFee(owner, agent, value string) (fee decimal.Decimal,
 	}
 	//4. check eth balance
 	feeInt := new(big.Int).Mul(gasPrice, big.NewInt(int64(gasLimit)))
-	fee = decimal.NewFromBigInt(feeInt, 0)
 	fee, err = ToDecimal(feeInt, 18)
 	return
 }
