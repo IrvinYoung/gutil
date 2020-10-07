@@ -301,8 +301,8 @@ func (e *Ethereum) MakeTransaction(from []*TxFrom, to []*TxTo, params interface{
 	if err != nil {
 		return
 	}
-	println("net price=", gasPrice.String(), "set to:", 50000000000)
-	gasPrice = big.NewInt(50000000000)
+	println("net price=", gasPrice.String(), "set to:", 100000000000)
+	gasPrice = big.NewInt(100000000000)
 	//3. check balance
 	cost := new(big.Int).Mul(gasPrice, big.NewInt(int64(gasLimit)))
 	cost = new(big.Int).Add(cost, amount)
